@@ -1,0 +1,57 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Virtual Environment (not needed in Docker)
+venv/
+env/
+ENV/
+.venv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test reports and artifacts
+reports/
+screenshots/
+allure-results/
+allure-report/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation (already in image)
+*.md
+!README.md
+
+# Environment files
+.env
+.env.local
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store

@@ -30,58 +30,50 @@ A SaaS platform that tests applications from the user's perspective without requ
 ## Environment Requirements
 
 ### System Requirements
-- **Python**: 3.8 or higher
-- **pip**: Latest version
+- **Docker**: 20.10 or higher
+- **Docker Compose**: 2.0 or higher (usually included with Docker Desktop)
 - **Operating System**: macOS, Linux, or Windows with WSL2
 
-### Required Python Packages
-
-```bash
-behave>=1.2.6
-selenium>=4.0.0
-requests>=2.28.0
-pytest>=7.0.0
-```
-
-### Optional Dependencies (for enhanced features)
-```bash
-allure-behave>=2.13.0  # For advanced reporting
-python-dotenv>=1.0.0   # For environment configuration
-```
-
-### Browser Requirements (for web testing)
-- Chrome/Chromium (recommended)
-- ChromeDriver (matching your Chrome version)
-- Firefox (optional, for multi-browser testing)
+### What's Included in Docker Container
+- Python 3.11
+- Behave testing framework
+- Selenium WebDriver
+- Google Chrome (for browser automation)
+- All project dependencies
 
 ### Installation
 
-1. **Clone the repository**:
+1. **Install Docker**:
+   - **macOS/Windows**: Download [Docker Desktop](https://www.docker.com/products/docker-desktop)
+   - **Linux**: Follow [Docker installation guide](https://docs.docker.com/engine/install/)
+
+2. **Verify Docker installation**:
    ```bash
-   git clone <repository-url>
-   cd project
+   docker --version
+   docker-compose --version
    ```
 
-2. **Create a virtual environment** (recommended):
+3. **Clone the repository**:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   git clone https://github.com/tmehtiyev2019/testflow-ai.git
+   cd testflow-ai
    ```
 
-3. **Install dependencies**:
+4. **Build the Docker image**:
    ```bash
-   pip install -r requirements.txt
+   docker-compose build
    ```
 
-4. **Verify installation**:
+5. **Verify installation**:
    ```bash
-   behave --version
+   docker-compose run --rm testflow behave --version
    ```
+   Expected output: `behave 1.2.6`
 
 ## Project Structure
 
 ```
-project/
+testflow-ai/
 ├── acceptance_tests/
 │   ├── test_creation.feature          # Test scenario creation feature
 │   ├── test_execution.feature         # Test execution and monitoring feature
@@ -91,7 +83,14 @@ project/
 │   │   ├── test_execution_steps.py    # Step definitions for execution
 │   │   └── ai_capabilities_steps.py   # Step definitions for AI features
 │   └── environment.py                 # Behave test environment configuration
+├── Dockerfile                         # Docker image definition
+├── docker-compose.yml                 # Docker Compose configuration
+├── Makefile                           # Shortcut commands for Docker
+├── .dockerignore                      # Files to exclude from Docker build
+├── .gitignore                         # Git ignore patterns
 ├── README.md                          # This file
+├── PRODUCT_SPECIFICATION.md           # Detailed product vision and features
+├── QUICK_START.md                     # Quick reference guide
 └── requirements.txt                   # Python dependencies
 ```
 
@@ -99,17 +98,15 @@ project/
 
 ### Prerequisites Check
 
-Before running tests, ensure your environment is properly configured:
+Before running tests, ensure Docker is properly configured:
 
 ```bash
-# Verify Python version (should be 3.8+)
-python --version
+# Verify Docker is installed and running
+docker --version
+docker-compose --version
 
-# Verify Behave is installed
-behave --version
-
-# Activate virtual environment if not already active
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Build the Docker image (first time only)
+docker-compose build
 ```
 
 ### Running All Acceptance Tests
@@ -117,7 +114,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 To run all acceptance tests in the project:
 
 ```bash
-behave acceptance_tests/
+docker-compose run --rm testflow behave acceptance_tests/
 ```
 
 **Expected Output**: All tests should initially **FAIL** with `NotImplementedError` exceptions, as the step implementations are stubs.
@@ -128,13 +125,13 @@ To run tests for a specific feature:
 
 ```bash
 # Test Creation feature
-behave acceptance_tests/test_creation.feature
+docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
 
 # Test Execution feature
-behave acceptance_tests/test_execution.feature
+docker-compose run --rm testflow behave acceptance_tests/test_execution.feature
 
 # AI Capabilities feature (includes SWAP CHALLENGE)
-behave acceptance_tests/ai_capabilities.feature
+docker-compose run --rm testflow behave acceptance_tests/ai_capabilities.feature
 ```
 
 ### Running Specific Scenarios
@@ -142,10 +139,11 @@ behave acceptance_tests/ai_capabilities.feature
 To run a specific scenario by name:
 
 ```bash
-behave acceptance_tests/ --name "Create a simple web application test using natural language"
+# Run a specific scenario
+docker-compose run --rm testflow behave acceptance_tests/ --name "Create a simple web application test using natural language"
 
 # Run the SWAP CHALLENGE scenario
-behave acceptance_tests/ --name "SWAP CHALLENGE"
+docker-compose run --rm testflow behave acceptance_tests/ --name "SWAP CHALLENGE"
 ```
 
 ### Running with Verbose Output
@@ -153,7 +151,7 @@ behave acceptance_tests/ --name "SWAP CHALLENGE"
 For detailed step-by-step output:
 
 ```bash
-behave acceptance_tests/ --verbose
+docker-compose run --rm testflow behave acceptance_tests/ --verbose
 ```
 
 ### Running with Tags (Future Enhancement)
@@ -162,10 +160,24 @@ Once tags are added to scenarios, you can filter tests:
 
 ```bash
 # Run only tests tagged with @critical
-behave acceptance_tests/ --tags=@critical
+docker-compose run --rm testflow behave acceptance_tests/ --tags=@critical
 
 # Skip tests tagged with @wip (work in progress)
-behave acceptance_tests/ --tags=~@wip
+docker-compose run --rm testflow behave acceptance_tests/ --tags=~@wip
+```
+
+### Interactive Development
+
+To run commands inside the container interactively:
+
+```bash
+# Start a bash shell in the container
+docker-compose run --rm testflow bash
+
+# Inside the container, you can run commands directly:
+behave acceptance_tests/
+behave acceptance_tests/test_creation.feature
+exit
 ```
 
 ### Test Execution Summary
@@ -196,10 +208,59 @@ For HTML reports with Allure:
 
 ```bash
 # Run tests with Allure formatter
-behave acceptance_tests/ -f allure_behave.formatter:AllureFormatter -o ./reports
+docker-compose run --rm testflow behave acceptance_tests/ -f allure_behave.formatter:AllureFormatter -o ./reports
 
-# Generate and view HTML report
-allure serve ./reports
+# Reports will be saved to ./reports directory on your host machine
+# To view reports, you'll need Allure installed locally or use a report viewer
+```
+
+### Using Makefile (Optional Shortcut)
+
+For convenience, you can use the Makefile for shorter commands:
+
+```bash
+# Show all available commands
+make help
+
+# Build Docker image
+make build
+
+# Run all tests
+make test
+
+# Run specific features
+make test-creation
+make test-execution
+make test-swap
+
+# Run with verbose output
+make test-verbose
+
+# Open interactive shell
+make shell
+
+# Clean up
+make clean
+```
+
+### Docker Tips
+
+```bash
+# Rebuild the image after changing requirements.txt
+docker-compose build --no-cache
+# Or: make rebuild
+
+# View container logs
+docker-compose logs testflow
+
+# Stop all containers
+docker-compose down
+
+# Remove all containers and volumes
+docker-compose down -v
+
+# Run a single command without keeping container
+docker-compose run --rm testflow <command>
 ```
 
 ## Acceptance Test Scenarios

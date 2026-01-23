@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # TestFlow AI - Acceptance Tests
+  testflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: testflow-ai-tests
+    volumes:
+      # Mount project directory for live code updates
+      - .:/app
+      # Persist test reports
+      - ./reports:/app/reports
+      - ./screenshots:/app/screenshots
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Override default command for interactive development
+    # Use: docker-compose run testflow behave acceptance_tests/
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null  # Keep container running for development
+
+  # Optional: Database service for future use
+  # Uncomment when implementing the application
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: testflow-db
+  #   environment:
+  #     POSTGRES_DB: testflow
+  #     POSTGRES_USER: testflow
+  #     POSTGRES_PASSWORD: testflow_dev
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+# volumes:
+#   postgres_data:

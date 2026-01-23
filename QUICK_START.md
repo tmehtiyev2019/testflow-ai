@@ -8,26 +8,45 @@ This is a quick reference guide for running and verifying the acceptance tests.
 
 ## 🚀 5-Minute Setup
 
-### 1. Navigate to Project
+### 1. Install Docker
+- **macOS/Windows**: Download [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- **Linux**: Follow [Docker installation guide](https://docs.docker.com/engine/install/)
+
+### 2. Clone and Navigate to Project
 ```bash
+git clone https://github.com/tmehtiyev2019/testflow-ai.git
 cd testflow-ai
 ```
 
-### 2. Create Virtual Environment
+### 3. Build Docker Image
 ```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-### 3. Install Dependencies
-```bash
-pip install -r requirements.txt
+docker-compose build
 ```
 
 ### 4. Verify Installation
 ```bash
-behave --version
+docker-compose run --rm testflow behave --version
 # Expected output: behave 1.2.6
+```
+
+---
+
+## 💡 Optional: Using Makefile (Shortcut Commands)
+
+If you prefer shorter commands, use the included Makefile:
+
+```bash
+# See all available commands
+make help
+
+# Build and run tests
+make build
+make test
+
+# Run specific tests
+make test-creation
+make test-execution
+make test-swap
 ```
 
 ---
@@ -36,7 +55,7 @@ behave --version
 
 ### Run All Acceptance Tests
 ```bash
-behave acceptance_tests/
+docker-compose run --rm testflow behave acceptance_tests/
 ```
 
 **Expected Result**: All 4 scenarios should FAIL with `NotImplementedError`
@@ -44,22 +63,22 @@ behave acceptance_tests/
 ### Run Individual Features
 ```bash
 # Test Creation
-behave acceptance_tests/test_creation.feature
+docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
 
 # Test Execution
-behave acceptance_tests/test_execution.feature
+docker-compose run --rm testflow behave acceptance_tests/test_execution.feature
 
 # AI Capabilities (SWAP CHALLENGE)
-behave acceptance_tests/ai_capabilities.feature
+docker-compose run --rm testflow behave acceptance_tests/ai_capabilities.feature
 ```
 
 ### Run Specific Scenario
 ```bash
 # Run just the SWAP CHALLENGE
-behave acceptance_tests/ --name "SWAP CHALLENGE"
+docker-compose run --rm testflow behave acceptance_tests/ --name "SWAP CHALLENGE"
 
 # Run with verbose output
-behave acceptance_tests/ --verbose
+docker-compose run --rm testflow behave acceptance_tests/ --verbose
 ```
 
 ---
@@ -119,6 +138,10 @@ testflow-ai/
 │   │   ├── test_execution_steps.py
 │   │   └── ai_capabilities_steps.py
 │   └── environment.py              # Behave configuration
+├── Dockerfile                      # Docker image definition
+├── docker-compose.yml              # Docker Compose configuration
+├── Makefile                        # Shortcut commands for Docker
+├── .dockerignore                   # Files to exclude from Docker build
 ├── README.md                       # Main documentation
 ├── PRODUCT_SPECIFICATION.md        # Detailed product spec
 ├── QUICK_START.md                  # This file
@@ -153,33 +176,42 @@ testflow-ai/
 
 ## 🔍 Verification Checklist
 
-- [ ] Virtual environment activated
-- [ ] Dependencies installed (`pip install -r requirements.txt`)
-- [ ] Can run `behave --version` successfully
-- [ ] Running `behave acceptance_tests/` shows 4 failing scenarios
+- [ ] Docker and Docker Compose installed
+- [ ] Docker image built successfully (`docker-compose build`)
+- [ ] Can run `docker-compose run --rm testflow behave --version` successfully
+- [ ] Running `docker-compose run --rm testflow behave acceptance_tests/` shows 4 failing scenarios
 - [ ] All failures are `NotImplementedError` exceptions
-- [ ] Can run individual feature files
+- [ ] Can run individual feature files with Docker
 - [ ] Can run SWAP CHALLENGE scenario by name
-- [ ] README.md exists with installation instructions
+- [ ] README.md exists with Docker installation instructions
 - [ ] All step definition files exist in `steps/` directory
 
 ---
 
 ## 🐛 Troubleshooting
 
-### "behave: command not found"
+### "docker: command not found" or "docker-compose: command not found"
 ```bash
-# Make sure virtual environment is activated
-source venv/bin/activate
+# Make sure Docker is installed and running
+# macOS/Windows: Check Docker Desktop is running
+# Linux: Check Docker service status
+sudo systemctl status docker
+```
 
-# Reinstall behave
-pip install behave
+### Container build fails
+```bash
+# Clean build (removes cache)
+docker-compose build --no-cache
+
+# Remove old containers and rebuild
+docker-compose down
+docker-compose build
 ```
 
 ### "No steps directory found"
 ```bash
-# Verify structure
-ls -la acceptance_tests/steps/
+# Verify structure inside container
+docker-compose run --rm testflow ls -la acceptance_tests/steps/
 
 # Should show:
 # test_creation_steps.py
@@ -187,10 +219,20 @@ ls -la acceptance_tests/steps/
 # ai_capabilities_steps.py
 ```
 
-### "Import errors"
+### Tests not reflecting code changes
 ```bash
-# Reinstall all dependencies
-pip install --force-reinstall -r requirements.txt
+# Docker uses volumes to mount code, changes should be instant
+# If not, try rebuilding:
+docker-compose down
+docker-compose build
+docker-compose run --rm testflow behave acceptance_tests/
+```
+
+### Permission issues (Linux)
+```bash
+# If you get permission errors with generated files
+# Fix ownership of reports/screenshots
+sudo chown -R $USER:$USER reports/ screenshots/
 ```
 
 ---
