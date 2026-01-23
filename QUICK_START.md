@@ -10,7 +10,7 @@ This is a quick reference guide for running and verifying the acceptance tests.
 
 ### 1. Navigate to Project
 ```bash
-cd /Users/tmehtiyev/Desktop/NC\ State/CSC-510/project
+cd testflow-ai
 ```
 
 ### 2. Create Virtual Environment
@@ -109,7 +109,7 @@ Failing scenarios:
 ## 📁 Project Structure
 
 ```
-project/
+testflow-ai/
 ├── acceptance_tests/
 │   ├── test_creation.feature       # Scenario 1: Test creation
 │   ├── test_execution.feature      # Scenarios 2 & 3: Execution & reporting
@@ -121,7 +121,6 @@ project/
 │   └── environment.py              # Behave configuration
 ├── README.md                       # Main documentation
 ├── PRODUCT_SPECIFICATION.md        # Detailed product spec
-├── DELIVERABLE_1_CHECKLIST.md     # Submission checklist
 ├── QUICK_START.md                  # This file
 └── requirements.txt                # Python dependencies
 ```
@@ -201,7 +200,6 @@ pip install --force-reinstall -r requirements.txt
 ### Documentation Files
 - **README.md**: Complete project documentation with setup instructions
 - **PRODUCT_SPECIFICATION.md**: Detailed product vision, features, and architecture
-- **DELIVERABLE_1_CHECKLIST.md**: Grading rubric compliance verification
 
 ### BDD Resources
 - [Behave Documentation](https://behave.readthedocs.io/)
