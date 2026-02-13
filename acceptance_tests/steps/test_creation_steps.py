@@ -28,7 +28,7 @@ def step_impl(context, url):
     raise NotImplementedError('Step not yet implemented')
 
 
-@when('I provide the test steps in natural language')
+@when('I provide the test steps in natural language:')
 def step_impl(context):
     """Provide test steps using natural language input"""
     raise NotImplementedError('Step not yet implemented')

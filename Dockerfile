@@ -11,21 +11,15 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
+# Install system dependencies and Chromium
 RUN apt-get update && apt-get install -y \
-    # For Chrome/Chromium (needed for Selenium)
-    wget \
-    gnupg \
-    ca-certificates \
-    # Cleanup
+    chromium \
+    chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome (for Selenium WebDriver)
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
+# Set Chrome/Chromium environment variables
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Copy requirements first for better caching
 COPY requirements.txt .

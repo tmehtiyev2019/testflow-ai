@@ -10,7 +10,13 @@ def step_impl(context, test_name):
     raise NotImplementedError('Step not yet implemented')
 
 
-@given('the test contains the following steps')
+@given('I have a test scenario "{test_name}"')
+def step_impl(context, test_name):
+    """Setup: Test scenario exists in the system"""
+    raise NotImplementedError('Step not yet implemented')
+
+
+@given('the test contains the following steps:')
 def step_impl(context):
     """Define test steps using data table"""
     raise NotImplementedError('Step not yet implemented')
