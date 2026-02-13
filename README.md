@@ -37,6 +37,11 @@ docker-compose run --rm testflow behave --version
 
 ## Running Tests
 
+### Deliverable 2 (Prototype-1)
+- Scenario 1 (**Test Creation**) is implemented and should pass.
+- Other scenarios are still stubbed and may error if run.
+
+
 ### Run All Acceptance Tests
 ```bash
 docker-compose run --rm testflow behave acceptance_tests/
@@ -56,19 +61,16 @@ docker-compose run --rm testflow behave acceptance_tests/ai_capabilities.feature
 
 ### Expected Output
 
-All 4 scenarios should error with `NotImplementedError`:
+For Deliverable 2, run Scenario 1 only:
 
+```bash
+docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
 ```
-Errored scenarios:
-  acceptance_tests/ai_capabilities.feature:6  SWAP CHALLENGE - Self-healing test adapts to UI changes
-  acceptance_tests/test_creation.feature:6  Create a simple web application test using natural language
-  acceptance_tests/test_execution.feature:6  Execute a web application test and view results
-  acceptance_tests/test_execution.feature:21  View detailed failure report when test fails
 
-0 features passed, 0 failed, 3 error, 0 skipped
-0 scenarios passed, 0 failed, 4 error, 0 skipped
-0 steps passed, 0 failed, 4 error, 32 skipped
-```
+Expected: Scenario 1 passes.
+
+Running all acceptance tests may still error because scenarios 2–4 are not implemented in this deliverable.
+
 
 ## Acceptance Test Scenarios
 
