@@ -1,77 +1,94 @@
-"""Step definitions for Test Scenario Creation feature.
+"""Step definitions for Scenario 1: Test Scenario Creation.
 
-Deliverable 2 scope: implement ONLY Scenario 1 in
-acceptance_tests/test_creation.feature.
-
-Implementation approach:
-- Use an in-memory platform prototype (testflow.platform.TestFlowPlatform)
-  instead of a real UI so the acceptance test is deterministic and runnable
-  in Docker.
+Uses Selenium to drive a real headless Chromium browser against the Flask app.
+Each step interacts with the actual web UI (forms, buttons, page content).
 """
 
 from behave import given, when, then
+from selenium.webdriver.common.by import By
 
-from testflow.platform import TestFlowPlatform
 
-
-def _platform(context) -> TestFlowPlatform:
-    """Get/create the shared platform instance for the current scenario."""
-    if not hasattr(context, "platform"):
-        context.platform = TestFlowPlatform()
-    return context.platform
-
+# --- Scenario 1: Login step ---
 
 @given('I am logged into the testing platform')
 def step_logged_in(context):
-    _platform(context).login()
+    """Navigate to /login, fill in credentials, and submit the form."""
+    context.driver.get(f"{context.base_url}/login")
+    context.driver.find_element(By.ID, "email").send_keys("test@example.com")
+    context.driver.find_element(By.ID, "password").send_keys("password123")
+    context.driver.find_element(By.ID, "login-btn").click()
 
+
+# --- Scenario 1: Navigation step ---
 
 @when('I navigate to the "Create Test" page')
 def step_navigate_to_create_test(context):
-    _platform(context).navigate("Create Test")
+    """Navigate directly to the test creation page."""
+    context.driver.get(f"{context.base_url}/create-test")
 
+
+# --- Scenario 1: Form input steps ---
 
 @when('I enter the test name "{test_name}"')
 def step_enter_test_name(context, test_name):
+    """Type the test name into the form field."""
+    context.driver.find_element(By.ID, "test_name").send_keys(test_name)
     context.test_state["test_name"] = test_name
 
 
 @when('I enter the application URL "{url}"')
 def step_enter_application_url(context, url):
-    context.test_state["application_url"] = url
+    """Type the application URL into the form field."""
+    context.driver.find_element(By.ID, "application_url").send_keys(url)
 
 
 @when('I provide the test steps in natural language:')
 def step_provide_nl_steps(context):
-    # Behave stores the docstring in context.text
-    context.test_state["nl_steps_raw"] = (context.text or "").strip()
+    """Type the natural language steps into the textarea."""
+    steps_text = (context.text or "").strip()
+    context.driver.find_element(By.ID, "steps_raw").send_keys(steps_text)
 
 
 @when('I set expected outcome "{outcome}"')
 def step_set_expected_outcome(context, outcome):
-    context.test_state["expected_outcome"] = outcome
+    """Type the expected outcome into the form field."""
+    context.driver.find_element(By.ID, "expected_outcome").send_keys(outcome)
 
+
+# --- Scenario 1: Save action ---
 
 @when('I click "Save Test"')
 def step_save_test(context):
-    created = _platform(context).create_test(
-        name=context.test_state["test_name"],
-        url=context.test_state["application_url"],
-        nl_steps_raw=context.test_state["nl_steps_raw"],
-        expected_outcome=context.test_state["expected_outcome"],
-    )
-    context.test_state["created_test"] = created
+    """Click the Save Test button to submit the form."""
+    context.driver.find_element(By.ID, "save-test-btn").click()
 
+
+# --- Scenario 1: Verification steps ---
 
 @then('I should see a confirmation message "{message}"')
 def step_see_confirmation(context, message):
-    assert _platform(context).last_confirmation_message == message
+    """Assert the flash confirmation message is visible on the page."""
+    page_source = context.driver.page_source
+    assert message in page_source, (
+        f"Expected confirmation '{message}' not found on page."
+    )
 
 
 @then('the test should appear in my test list with status "{status}"')
 def step_test_appears_in_list(context, status):
-    tests = _platform(context).list_tests()
+    """Assert the test name and status appear in the test list table."""
     name = context.test_state["test_name"]
-    assert any(t.name == name and t.status == status for t in tests), (
-        f"Expected test '{name}' with status '{status}'. Found: {[ (t.name, t.status) for t in tests ]}"
+    # We should already be on the test list page (redirected after save).
+    names = context.driver.find_elements(By.CLASS_NAME, "test-name")
+    statuses = context.driver.find_elements(By.CLASS_NAME, "test-status")
+
+    found = False
+    for n, s in zip(names, statuses):
+        if n.text == name and s.text == status:
+            found = True
+            break
+
+    assert found, (
+        f"Expected test '{name}' with status '{status}' in list. "
+        f"Found: {[(n.text, s.text) for n, s in zip(names, statuses)]}"
     )

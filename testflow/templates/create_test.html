@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Create Test - TestFlow</title></head>
+<body>
+  <h1>Create Test</h1>
+  <p><a href="/tests">Back to Test List</a></p>
+  <form method="post">
+    <label for="test_name">Test Name:</label><br>
+    <input type="text" id="test_name" name="test_name" required><br>
+
+    <label for="application_url">Application URL:</label><br>
+    <input type="text" id="application_url" name="application_url" required><br>
+
+    <label for="steps_raw">Test Steps (natural language):</label><br>
+    <textarea id="steps_raw" name="steps_raw" rows="8" cols="60" required></textarea><br>
+
+    <label for="expected_outcome">Expected Outcome:</label><br>
+    <input type="text" id="expected_outcome" name="expected_outcome" required><br><br>
+
+    <button type="submit" id="save-test-btn">Save Test</button>
+  </form>
+</body>
+</html>

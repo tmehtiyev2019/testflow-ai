@@ -1,13 +1,19 @@
 # Changelog
 
-## [prototype-1] - 2026-02-13
+## [prototype-1] - 2026-02-14
 
-### Implemented (Deliverable 2)
-- **Scenario 1 Prototype (Test Creation):** Added an in-memory platform prototype that supports login, navigation to "Create Test", saving a test scenario, and listing tests with default status **"Not Run"**.
-- Implemented Behave step definitions for **Scenario 1** in `acceptance_tests/test_creation.feature` using the prototype.
+### Implemented (Deliverable 2 — Scenario 1: Test Creation)
+
+- **Flask web application** (`testflow/app.py`) with routes for login, test creation form, and test list page.
+- **SQLite database** (`testflow/db.py`) storing test scenarios with name, URL, steps, expected outcome, and status (default "Not Run").
+- **HTML templates** (`testflow/templates/`) for login, create test, and test list pages.
+- **Selenium step definitions** (`acceptance_tests/steps/test_creation_steps.py`) driving a real headless Chromium browser against the Flask app.
+- **Behave environment** (`acceptance_tests/environment.py`) starts Flask in a background thread, initializes Selenium, and resets the database between scenarios.
 
 ### Changed
-- Improved Behave environment output so scenarios that error/fail are not printed as "PASSED".
+- Replaced in-memory platform prototype with real Flask + SQLite + Selenium implementation.
+- Added `flask>=3.0.0` to `requirements.txt`.
+- Updated README with technology stack, architecture explanation, and correct expected output.
 
 ### Notes
-- Only Scenario 1 is implemented in this deliverable. Other scenarios remain stubs.
+- Only Scenario 1 is implemented in this deliverable. Scenarios 2-4 remain stubs.

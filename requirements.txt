@@ -1,6 +1,9 @@
 # Core Testing Framework
 behave>=1.2.6
 
+# Web Application
+flask>=3.0.0
+
 # Web Automation
 selenium>=4.0.0
 

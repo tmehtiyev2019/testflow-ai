@@ -37,81 +37,87 @@ docker-compose run --rm testflow behave --version
 
 ## Running Tests
 
-### Deliverable 2 (Prototype-1)
-- Scenario 1 (**Test Creation**) is implemented and should pass.
-- Other scenarios are still stubbed and may error if run.
+### Run Scenario 1 (Test Creation)
+```bash
+docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
+```
 
+Expected output:
+```
+1 feature passed, 0 failed, 0 skipped
+1 scenario passed, 0 failed, 0 skipped
+9 steps passed, 0 failed, 0 skipped
+```
 
 ### Run All Acceptance Tests
 ```bash
 docker-compose run --rm testflow behave acceptance_tests/
 ```
 
-### Run Individual Features
-```bash
-# Test Creation
-docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
+Note: Scenarios 2-4 are not yet implemented and will error with `NotImplementedError`.
 
-# Test Execution
-docker-compose run --rm testflow behave acceptance_tests/test_execution.feature
+## Technology Stack
 
-# AI Capabilities (SWAP CHALLENGE)
-docker-compose run --rm testflow behave acceptance_tests/ai_capabilities.feature
-```
+- **Web Application**: Flask (Python) with server-side HTML templates
+- **Database**: SQLite
+- **Browser Automation**: Selenium + headless Chromium
+- **Testing Framework**: Behave (BDD / Gherkin)
+- **Containerization**: Docker
 
-### Expected Output
+## How It Works
 
-For Deliverable 2, run Scenario 1 only:
+When tests run, the following happens inside the Docker container:
 
-```bash
-docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
-```
-
-Expected: Scenario 1 passes.
-
-Running all acceptance tests may still error because scenarios 2–4 are not implemented in this deliverable.
-
+1. Behave starts and `environment.py` launches a Flask server on port 5000 in a background thread
+2. A headless Chromium browser is opened via Selenium
+3. Step definitions use Selenium to navigate to pages, fill forms, and click buttons on the real Flask app
+4. Flask saves data to SQLite and renders HTML pages
+5. Selenium verifies confirmation messages and test list content
+6. After tests complete, the browser and server shut down
 
 ## Acceptance Test Scenarios
 
-### Scenario 1: Test Creation
-- **Feature**: Test Scenario Creation
+### Scenario 1: Test Creation (Implemented)
 - **User Story**: As a QA engineer, I want to create test scenarios in natural language
-- **Scope**: Create a test with name, URL, steps, and expected outcomes
+- **Flow**: Login → Navigate to "Create Test" → Fill form → Save → See confirmation → Test appears in list
 
-### Scenario 2: Test Execution and Results
-- **Feature**: Test Execution and Monitoring
+### Scenario 2: Test Execution and Results (Not yet implemented)
 - **User Story**: As a product manager, I want to execute tests and monitor results
-- **Scope**: Run test, view pass/fail status, screenshots, and performance metrics
 
-### Scenario 3: Failure Diagnosis
-- **Feature**: Test Execution and Monitoring
+### Scenario 3: Failure Diagnosis (Not yet implemented)
 - **User Story**: As a product manager, I want detailed failure reports
-- **Scope**: Execute failing test, view failure message, AI diagnosis, and notifications
 
-### Scenario 4: SWAP CHALLENGE - Self-Healing Tests
-- **Feature**: AI-Powered Testing Capabilities
+### Scenario 4: SWAP CHALLENGE - Self-Healing Tests (Not yet implemented)
 - **User Story**: As a development team, I want tests to adapt to UI changes automatically
-- **Scope**: Test detects UI change, AI identifies new selector, test auto-heals
 
 ## Project Structure
 
 ```
 testflow-ai/
-├── acceptance_tests/
-│   ├── test_creation.feature          # Test scenario creation feature
-│   ├── test_execution.feature         # Test execution and monitoring feature
-│   ├── ai_capabilities.feature        # AI-powered testing (SWAP CHALLENGE)
-│   ├── steps/
-│   │   ├── test_creation_steps.py     # Step definitions for test creation
-│   │   ├── test_execution_steps.py    # Step definitions for execution
-│   │   └── ai_capabilities_steps.py   # Step definitions for AI features
-│   └── environment.py                 # Behave test environment configuration
-├── Dockerfile                         # Docker image definition
-├── docker-compose.yml                 # Docker Compose configuration
-├── README.md                          # This file
-├── PRODUCT_SPECIFICATION.md           # Detailed product specification
-└── requirements.txt                   # Python dependencies
+├── testflow/                            # Source code
+│   ├── __init__.py
+│   ├── app.py                           # Flask application (routes, views)
+│   ├── db.py                            # SQLite database helpers
+│   ├── platform.py                      # In-memory prototype (Deliverable 1)
+│   └── templates/
+│       ├── login.html                   # Login page
+│       ├── create_test.html             # Test creation form
+│       └── test_list.html               # Test list with status
+├── acceptance_tests/                    # BDD test suite
+│   ├── test_creation.feature            # Scenario 1 (Gherkin)
+│   ├── test_execution.feature           # Scenarios 2 & 3 (Gherkin)
+│   ├── ai_capabilities.feature          # Scenario 4 - SWAP CHALLENGE (Gherkin)
+│   ├── steps/                           # Step definitions
+│   │   ├── test_creation_steps.py       # Selenium-based steps for Scenario 1
+│   │   ├── test_execution_steps.py      # Stubs for Scenarios 2 & 3
+│   │   └── ai_capabilities_steps.py     # Stubs for Scenario 4
+│   └── environment.py                   # Flask + Selenium setup/teardown
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── README.md
+├── CHANGELOG.md
+└── PRODUCT_SPECIFICATION.md
 ```
 
 ## Troubleshooting
@@ -128,5 +134,5 @@ docker-compose build --no-cache
 ```bash
 docker-compose down
 docker-compose build
-docker-compose run --rm testflow behave acceptance_tests/
+docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
 ```
