@@ -7,13 +7,13 @@
 - **Flask web application** (`src/app.py`) with routes for login, test creation form, and test list page.
 - **SQLite database** (`src/db.py`) storing test scenarios with name, URL, steps, expected outcome, and status (default "Not Run").
 - **HTML templates** (`src/templates/`) for login, create test, and test list pages.
-- **Selenium step definitions** (`test/steps/test_creation_steps.py`) driving a real headless Chromium browser against the Flask app.
-- **Behave environment** (`test/environment.py`) starts Flask in a background thread, initializes Selenium, and resets the database between scenarios.
+- **Selenium step definitions** (`acceptance_tests/steps/test_creation_steps.py`) driving a real headless Chromium browser against the Flask app.
+- **Behave environment** (`acceptance_tests/environment.py`) starts Flask in a background thread, initializes Selenium, and resets the database between scenarios.
 
 ### Changed
 - Replaced in-memory platform prototype with real Flask + SQLite + Selenium implementation.
 - Added `flask>=3.0.0` to `requirements.txt`.
-- Renamed directories to match rubric: `src/`, `test/`, `test/steps/`.
+- Renamed source code directory to `src/`.
 - Updated README with technology stack, architecture explanation, and correct expected output.
 
 ### Notes

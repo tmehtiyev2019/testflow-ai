@@ -39,7 +39,7 @@ docker-compose run --rm testflow behave --version
 
 ### Run Scenario 1 (Test Creation)
 ```bash
-docker-compose run --rm testflow behave test/test_creation.feature
+docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
 ```
 
 Expected output:
@@ -51,7 +51,7 @@ Expected output:
 
 ### Run All Acceptance Tests
 ```bash
-docker-compose run --rm testflow behave test/
+docker-compose run --rm testflow behave acceptance_tests/
 ```
 
 Note: Scenarios 2-4 are not yet implemented and will error with `NotImplementedError`.
@@ -102,7 +102,7 @@ testflow-ai/
 │       ├── login.html                   # Login page
 │       ├── create_test.html             # Test creation form
 │       └── test_list.html               # Test list with status
-├── test/                                # BDD test suite
+├── acceptance_tests/                    # BDD test suite
 │   ├── test_creation.feature            # Scenario 1 (Gherkin)
 │   ├── test_execution.feature           # Scenarios 2 & 3 (Gherkin)
 │   ├── ai_capabilities.feature          # Scenario 4 - SWAP CHALLENGE (Gherkin)
@@ -133,5 +133,5 @@ docker-compose build --no-cache
 ```bash
 docker-compose down
 docker-compose build
-docker-compose run --rm testflow behave test/test_creation.feature
+docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
 ```
