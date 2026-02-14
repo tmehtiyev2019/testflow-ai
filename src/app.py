@@ -12,7 +12,7 @@ via Selenium. The full Scenario 1 flow through these routes is:
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 
-from testflow.db import init_db, insert_test, get_all_tests
+from src.db import init_db, insert_test, get_all_tests
 
 # Hardcoded credentials for the prototype.
 # Scenario 1: used by the "I am logged into the testing platform" step.

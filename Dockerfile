@@ -38,4 +38,4 @@ RUN mkdir -p reports screenshots
 EXPOSE 8000
 
 # Default command: run Behave tests
-CMD ["behave", "acceptance_tests/", "--no-capture"]
+CMD ["behave", "test/", "--no-capture"]

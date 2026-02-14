@@ -13,8 +13,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
-from testflow.app import create_app
-from testflow.db import reset_db
+from src.app import create_app
+from src.db import reset_db
 
 # Flask server settings
 FLASK_HOST = "127.0.0.1"

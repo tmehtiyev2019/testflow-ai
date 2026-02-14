@@ -52,3 +52,9 @@ screenshots/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# SQLite database
+*.db
+
+# Notes
+notes.txt
