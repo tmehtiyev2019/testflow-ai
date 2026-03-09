@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestFlow AI - Project Presentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .slide {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 60px 100px;
+    text-align: center;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .slide.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 20px;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #60a5fa;
+    margin-bottom: 30px;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #a78bfa;
+    margin-bottom: 16px;
+  }
+
+  .subtitle {
+    font-size: 1.4rem;
+    color: #94a3b8;
+    font-weight: 300;
+    margin-bottom: 30px;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 4px;
+  }
+
+  .tag-blue { background: rgba(96,165,250,0.15); color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+  .tag-purple { background: rgba(167,139,250,0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
+  .tag-green { background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+  .tag-pink { background: rgba(244,114,182,0.15); color: #f472b6; border: 1px solid rgba(244,114,182,0.3); }
+
+  .content-left {
+    text-align: left;
+    width: 100%;
+    max-width: 1000px;
+  }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 22px;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    border-left: 3px solid #60a5fa;
+  }
+
+  .item-icon {
+    font-size: 1.5rem;
+    margin-right: 16px;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  .item-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #cbd5e1;
+  }
+
+  .item-text strong { color: #f1f5f9; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    width: 100%;
+    max-width: 1100px;
+    text-align: left;
+  }
+
+  .col {
+    padding: 24px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .code-block {
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    text-align: left;
+    max-width: 900px;
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto;
+  }
+
+  .code-block .keyword { color: #c084fc; }
+  .code-block .string { color: #34d399; }
+  .code-block .comment { color: #64748b; }
+  .code-block .step { color: #60a5fa; }
+
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 30px 0;
+    flex-wrap: wrap;
+  }
+
+  .flow-box {
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .flow-arrow { color: #475569; font-size: 1.3rem; }
+
+  .checklist {
+    text-align: left;
+    max-width: 800px;
+    width: 100%;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 1.1rem;
+  }
+
+  .check-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .check-done { background: rgba(52,211,153,0.2); color: #34d399; }
+  .check-pending { background: rgba(251,191,36,0.2); color: #fbbf24; }
+
+  .progress-bar {
+    width: 100%;
+    max-width: 600px;
+    height: 12px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    margin: 20px auto;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  }
+
+  .nav {
+    position: fixed;
+    bottom: 30px;
+    right: 40px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+
+  .nav button {
+    padding: 10px 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    color: #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .nav button:hover { background: rgba(255,255,255,0.1); }
+
+  .slide-counter {
+    position: fixed;
+    bottom: 35px;
+    left: 40px;
+    color: #475569;
+    font-size: 0.85rem;
+  }
+
+  .scenario-box {
+    padding: 18px 22px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 16px;
+    text-align: left;
+    max-width: 1000px;
+    width: 100%;
+  }
+
+  .scenario-box .num {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 32px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-right: 12px;
+  }
+
+  .scenario-box p {
+    margin-top: 8px;
+    padding-left: 44px;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide active" id="slide-1">
+  <h1>TestFlow AI</h1>
+  <div class="subtitle">Black-Box End-to-End Testing SaaS Platform</div>
+  <p style="max-width: 700px; margin-top: 20px; color: #94a3b8; font-size: 1.1rem; line-height: 1.7;">
+    End-to-end testing is hard &mdash; it requires coding expertise, breaks when UIs change, and gives unhelpful error messages. <strong style="color: #e2e8f0;">TestFlow AI</strong> lets anyone create, run, and maintain E2E tests using natural language, powered by AI that self-heals broken tests and diagnoses failures.
+  </p>
+  <div style="margin-top: 20px;">
+    <span class="tag tag-blue">Flask</span>
+    <span class="tag tag-purple">Selenium</span>
+    <span class="tag tag-green">Behave (BDD)</span>
+    <span class="tag tag-pink">AI-Powered</span>
+  </div>
+  <p style="margin-top: 30px; color: #475569; font-size: 0.95rem;">CSC 510 - Software Engineering &bull; NC State University</p>
+</div>
+
+<!-- SLIDE 2: Target Users -->
+<div class="slide" id="slide-2">
+  <h2>Target Users</h2>
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; max-width: 1100px; text-align: left;">
+    <div class="col" style="border-top: 3px solid #60a5fa;">
+      <h3 style="color: #60a5fa; font-size: 1.2rem;">Sarah &mdash; QA Engineer</h3>
+      <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">QA Engineer at 50-person SaaS company</p>
+      <div class="item-text" style="font-size: 0.9rem; line-height: 1.8;">
+        <strong style="color: #f87171;">Pain Points</strong><br>
+        &bull; Brittle tests &amp; manual regression<br>
+        &bull; Time-consuming debugging<br><br>
+        <strong style="color: #34d399;">Uses TestFlow to</strong><br>
+        &bull; Automate regression testing<br>
+        &bull; Validate new features<br><br>
+        <strong>Goal:</strong> 70% less maintenance time
+      </div>
+    </div>
+    <div class="col" style="border-top: 3px solid #a78bfa;">
+      <h3 style="color: #a78bfa; font-size: 1.2rem;">Michael &mdash; Product Manager</h3>
+      <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">Product Manager at startup</p>
+      <div class="item-text" style="font-size: 0.9rem; line-height: 1.8;">
+        <strong style="color: #f87171;">Pain Points</strong><br>
+        &bull; No visibility into production issues<br>
+        &bull; Depends on engineering for testing<br><br>
+        <strong style="color: #34d399;">Uses TestFlow to</strong><br>
+        &bull; Monitor checkout &amp; signup flows<br>
+        &bull; Track feature launches<br><br>
+        <strong>Goal:</strong> Catch issues before users do
+      </div>
+    </div>
+    <div class="col" style="border-top: 3px solid #f472b6;">
+      <h3 style="color: #f472b6; font-size: 1.2rem;">Dev Team (5-10 people)</h3>
+      <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">Full-stack developers at growing startup</p>
+      <div class="item-text" style="font-size: 0.9rem; line-height: 1.8;">
+        <strong style="color: #f87171;">Pain Points</strong><br>
+        &bull; No dedicated QA team<br>
+        &bull; Manual testing before deploys<br><br>
+        <strong style="color: #34d399;">Uses TestFlow to</strong><br>
+        &bull; Pre-deployment validation<br>
+        &bull; Quick smoke tests<br><br>
+        <strong>Goal:</strong> Zero critical bugs in prod
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: Problem & Solution -->
+<div class="slide" id="slide-3">
+  <h2>The Problem</h2>
+  <div class="two-col">
+    <div class="col">
+      <h3 style="color: #f87171;">Pain Points</h3>
+      <div class="item-text" style="line-height: 2;">
+        &bull; Writing E2E tests requires deep coding skills<br>
+        &bull; UI changes constantly break selectors<br>
+        &bull; Failures are hard to diagnose without context<br>
+        &bull; Test maintenance overhead grows with the app
+      </div>
+    </div>
+    <div class="col">
+      <h3 style="color: #34d399;">Our Solution</h3>
+      <div class="item-text" style="line-height: 2;">
+        &bull; Create tests in <strong>natural language</strong><br>
+        &bull; AI <strong>self-heals</strong> broken selectors<br>
+        &bull; AI-powered <strong>failure diagnosis</strong><br>
+        &bull; No access to source code needed (black-box)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: Architecture Overview -->
+<div class="slide" id="slide-4">
+  <h2>Architecture Overview</h2>
+  <p style="color: #94a3b8; margin-bottom: 24px;">Everything runs inside a single Docker container</p>
+  <div class="flow-diagram">
+    <div class="flow-box" style="background: rgba(96,165,250,0.15); color: #60a5fa;">User (Browser)</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-box" style="background: rgba(167,139,250,0.15); color: #a78bfa;">Flask Web App</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-box" style="background: rgba(52,211,153,0.15); color: #34d399;">SQLite DB</div>
+  </div>
+  <div class="flow-diagram" style="margin-top: 10px;">
+    <div class="flow-box" style="background: rgba(244,114,182,0.15); color: #f472b6;">Behave (BDD)</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-box" style="background: rgba(251,191,36,0.15); color: #fbbf24;">Selenium</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-box" style="background: rgba(96,165,250,0.15); color: #60a5fa;">Headless Chromium</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-box" style="background: rgba(167,139,250,0.15); color: #a78bfa;">Flask App</div>
+  </div>
+  <div style="margin-top: 30px; max-width: 800px; color: #94a3b8; font-size: 0.95rem; line-height: 1.7; text-align: left;">
+    <strong style="color: #e2e8f0;">Top row:</strong> The web application itself &mdash; user interacts via browser, Flask handles requests, SQLite stores data.<br>
+    <strong style="color: #e2e8f0;">Bottom row:</strong> The test pipeline &mdash; Behave reads .feature files and triggers Selenium, which drives a headless browser against the running Flask app.
+  </div>
+</div>
+
+<!-- SLIDE 5: Component Roles -->
+<div class="slide" id="slide-5">
+  <h2>What Each Component Does</h2>
+  <div class="content-left">
+    <div class="item" style="border-left-color: #a78bfa;">
+      <div class="item-icon" style="font-size: 1.1rem;">&#9881;</div>
+      <div class="item-text"><strong style="color: #a78bfa;">Flask (app.py)</strong> &mdash; The web server. Serves 3 routes: <code>/login</code> for authentication, <code>/create-test</code> for the test creation form, and <code>/tests</code> to list saved tests. Renders HTML templates and handles form submissions.</div>
+    </div>
+    <div class="item" style="border-left-color: #34d399;">
+      <div class="item-icon" style="font-size: 1.1rem;">&#128451;</div>
+      <div class="item-text"><strong style="color: #34d399;">SQLite (db.py)</strong> &mdash; The database. Stores test scenarios in a <code>test_scenarios</code> table with columns: name, application_url, steps_raw, expected_outcome, and status (defaults to "Not Run"). Reset before each test run for isolation.</div>
+    </div>
+    <div class="item" style="border-left-color: #f472b6;">
+      <div class="item-icon" style="font-size: 1.1rem;">&#9881;</div>
+      <div class="item-text"><strong style="color: #f472b6;">Behave</strong> &mdash; The BDD test runner. Reads <code>.feature</code> files (Gherkin syntax), matches each Given/When/Then step to a Python function in <code>steps/</code>, and reports pass/fail.</div>
+    </div>
+    <div class="item" style="border-left-color: #fbbf24;">
+      <div class="item-icon" style="font-size: 1.1rem;">&#127760;</div>
+      <div class="item-text"><strong style="color: #fbbf24;">Selenium + Chromium</strong> &mdash; The browser automation. Opens a headless (invisible) Chrome browser, navigates to pages, fills in form fields with <code>send_keys()</code>, clicks buttons with <code>click()</code>, and reads page content with <code>page_source</code> to verify assertions.</div>
+    </div>
+    <div class="item" style="border-left-color: #60a5fa;">
+      <div class="item-icon" style="font-size: 1.1rem;">&#128230;</div>
+      <div class="item-text"><strong style="color: #60a5fa;">Docker</strong> &mdash; The container. Packages Python, Flask, Chromium, ChromeDriver, and all dependencies into one reproducible image. One command (<code>docker-compose run</code>) builds and runs everything &mdash; no local setup needed.</div>
+    </div>
+    <div class="item" style="border-left-color: #f87171;">
+      <div class="item-icon" style="font-size: 1.1rem;">&#9654;</div>
+      <div class="item-text"><strong style="color: #f87171;">environment.py</strong> &mdash; The glue. Starts Flask in a background thread, initializes Selenium, resets the database before each scenario, and tears everything down after tests complete.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: The 4 Scenarios -->
+<div class="slide" id="slide-6">
+  <h2>Acceptance Test Scenarios</h2>
+  <div class="scenario-box">
+    <span class="num" style="background: rgba(52,211,153,0.2); color: #34d399;">1</span>
+    <strong>Test Scenario Creation</strong> <span class="tag tag-green" style="font-size: 0.75rem;">Implemented</span>
+    <p>QA engineer creates a test in natural language &mdash; login, fill form, save, verify in test list.</p>
+  </div>
+  <div class="scenario-box">
+    <span class="num" style="background: rgba(251,191,36,0.2); color: #fbbf24;">2</span>
+    <strong>Test Execution & Results</strong> <span class="tag tag-purple" style="font-size: 0.75rem;">Stub</span>
+    <p>Run a saved test, see pass status, execution time, screenshots, and performance metrics.</p>
+  </div>
+  <div class="scenario-box">
+    <span class="num" style="background: rgba(251,191,36,0.2); color: #fbbf24;">3</span>
+    <strong>Failure Diagnosis</strong> <span class="tag tag-purple" style="font-size: 0.75rem;">Stub</span>
+    <p>When a test fails, see failure details, screenshot at failure point, and AI-powered diagnosis.</p>
+  </div>
+  <div class="scenario-box">
+    <span class="num" style="background: rgba(251,191,36,0.2); color: #fbbf24;">4</span>
+    <strong>SWAP Challenge &mdash; Self-Healing Tests</strong> <span class="tag tag-pink" style="font-size: 0.75rem;">Stub</span>
+    <p>AI detects broken selectors after UI changes, auto-heals them, and flags for review.</p>
+  </div>
+</div>
+
+<!-- SLIDE 7: Feature 1 - Test Creation (1 scenario) -->
+<div class="slide" id="slide-7">
+  <h2>Feature 1: Test Scenario Creation</h2>
+  <p style="color: #94a3b8; margin-bottom: 20px;">1 scenario &bull; 9 steps &bull; <span style="color: #34d399;">Implemented</span></p>
+  <div class="code-block">
+    <span class="keyword">Feature:</span> Test Scenario Creation<br>
+    &nbsp;&nbsp;<span class="comment">As a QA engineer, I want to create test scenarios in natural language</span><br><br>
+    &nbsp;&nbsp;<span class="keyword">Scenario:</span> Create a simple web application test using natural language<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">Given</span> I am logged into the testing platform<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">When</span> I navigate to the <span class="string">"Create Test"</span> page<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I enter the test name <span class="string">"Checkout Flow Validation"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I enter the application URL <span class="string">"https://example-shop.com"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I provide the test steps in natural language:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">&quot;1. Navigate to homepage  2. Click Products  3. Select first product<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4. Click Add to Cart  5. Verify cart shows 1 item&quot;</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I set expected outcome <span class="string">"Cart displays 1 item successfully"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I click <span class="string">"Save Test"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">Then</span> I should see a confirmation message <span class="string">"Test scenario created successfully"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the test should appear in my test list with status <span class="string">"Not Run"</span>
+  </div>
+</div>
+
+<!-- SLIDE 8: Feature 2 - Test Execution (2 scenarios) -->
+<div class="slide" id="slide-8">
+  <h2>Feature 2: Test Execution & Monitoring</h2>
+  <p style="color: #94a3b8; margin-bottom: 20px;">2 scenarios &bull; <span style="color: #fbbf24;">Stubs (NotImplementedError)</span></p>
+  <div class="code-block" style="font-size: 0.85rem;">
+    <span class="keyword">Feature:</span> Test Execution and Monitoring<br>
+    &nbsp;&nbsp;<span class="comment">As a product manager, I want to execute tests and monitor their results</span><br><br>
+    &nbsp;&nbsp;<span class="keyword">Scenario 2:</span> Execute a web application test and view results<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">Given</span> I have a saved test scenario <span class="string">"User Login Flow"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the test contains steps (login form &rarr; dashboard)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">When</span> I click <span class="string">"Run Test"</span> for <span class="string">"User Login Flow"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I wait for test execution to complete<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">Then</span> I should see test status as <span class="string">"Passed"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I should see execution time, screenshots, and performance metrics<br><br>
+    &nbsp;&nbsp;<span class="keyword">Scenario 3:</span> View detailed failure report when test fails<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">Given</span> I have a test scenario <span class="string">"Payment Processing"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the test is configured to verify <span class="string">"Payment confirmation message"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">When</span> I execute the test<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the payment API returns a timeout error<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">Then</span> I should see test status as <span class="string">"Failed"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I should see failure message, screenshot, and AI-powered diagnosis<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I should receive an email notification about the failure
+  </div>
+</div>
+
+<!-- SLIDE 9: Feature 3 - AI Capabilities / SWAP (1 scenario) -->
+<div class="slide" id="slide-9">
+  <h2>Feature 3: AI-Powered Capabilities</h2>
+  <p style="color: #94a3b8; margin-bottom: 20px;">1 scenario (SWAP Challenge) &bull; <span style="color: #fbbf24;">Stub (NotImplementedError)</span></p>
+  <div class="code-block">
+    <span class="keyword">Feature:</span> AI-Powered Testing Capabilities<br>
+    &nbsp;&nbsp;<span class="comment">As a development team, I want AI to intelligently adapt tests and diagnose failures</span><br><br>
+    &nbsp;&nbsp;<span class="keyword">Scenario 4 (SWAP):</span> Self-healing test adapts to UI changes<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">Given</span> I have a test scenario <span class="string">"Add Product to Wishlist"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the test clicks a button with selector <span class="string">"button.add-wishlist"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the application UI is updated and the button class changes to <span class="string">"btn-add-to-wishlist"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">When</span> I execute the test after the UI change<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">Then</span> the AI should detect the selector is no longer valid<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the AI should identify the equivalent button using visual and textual analysis<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the AI should update the test selector to <span class="string">"btn-add-to-wishlist"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the test should pass successfully<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> I should see a notification <span class="string">"Test auto-healed: Updated button selector"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="step">And</span> the test should be marked as <span class="string">"Requires Review"</span> for approval
+  </div>
+</div>
+
+<!-- SLIDE 10: How Scenario 1 Works -->
+<div class="slide" id="slide-10">
+  <h2>How Scenario 1 Works</h2>
+  <div class="content-left">
+    <div class="item">
+      <div class="item-icon">1</div>
+      <div class="item-text"><strong>environment.py</strong> starts Flask on port 5000 in a background thread + launches headless Chromium via Selenium</div>
+    </div>
+    <div class="item" style="border-left-color: #a78bfa;">
+      <div class="item-icon">2</div>
+      <div class="item-text"><strong>app.py</strong> serves routes: <code>/login</code>, <code>/create-test</code>, <code>/tests</code> with HTML templates</div>
+    </div>
+    <div class="item" style="border-left-color: #34d399;">
+      <div class="item-icon">3</div>
+      <div class="item-text"><strong>test_creation_steps.py</strong> &mdash; Selenium fills forms, clicks buttons, and asserts page content</div>
+    </div>
+    <div class="item" style="border-left-color: #f472b6;">
+      <div class="item-icon">4</div>
+      <div class="item-text"><strong>db.py</strong> &mdash; SQLite stores test scenarios; database is reset before each scenario for isolation</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: Selenium Under the Hood -->
+<div class="slide" id="slide-11">
+  <h2>Selenium: What Happens Under the Hood</h2>
+  <p style="color: #94a3b8; margin-bottom: 24px;">The automated test does exactly what a human does &mdash; but in a headless browser</p>
+  <div class="two-col">
+    <div class="col">
+      <h3 style="color: #60a5fa;">You (Manual)</h3>
+      <div class="item-text" style="line-height: 2.2; font-size: 0.95rem;">
+        1. Open browser, go to /login<br>
+        2. Type email &amp; password, click Login<br>
+        3. Navigate to /create-test<br>
+        4. Type <span class="string" style="color: #34d399;">"Checkout Flow Validation"</span><br>
+        5. Type the application URL<br>
+        6. Type test steps in the textarea<br>
+        7. Type expected outcome<br>
+        8. Click <strong>Save Test</strong><br>
+        9. See confirmation &amp; test in list
+      </div>
+    </div>
+    <div class="col">
+      <h3 style="color: #a78bfa;">Selenium (Automated)</h3>
+      <div class="item-text" style="line-height: 2.2; font-size: 0.95rem;">
+        1. <code>driver.get("/login")</code><br>
+        2. <code>find_element(ID, "email").send_keys(...)</code><br>
+        3. <code>driver.get("/create-test")</code><br>
+        4. <code>find_element(ID, "test_name").send_keys(...)</code><br>
+        5. <code>find_element(ID, "application_url").send_keys(...)</code><br>
+        6. <code>find_element(ID, "steps_raw").send_keys(...)</code><br>
+        7. <code>find_element(ID, "expected_outcome").send_keys(...)</code><br>
+        8. <code>find_element(ID, "save-test-btn").click()</code><br>
+        9. <code>assert "Test scenario created" in page</code>
+      </div>
+    </div>
+  </div>
+  <p style="color: #64748b; margin-top: 24px; font-size: 0.9rem;">Runs in headless Chromium inside Docker &mdash; no visible browser window needed</p>
+</div>
+
+<!-- SLIDE 12: Deliverable Status -->
+<div class="slide" id="slide-12">
+  <h2>Deliverable Status</h2>
+  <div class="two-col">
+    <div class="col">
+      <h3 style="color: #34d399;">Deliverable 1 &check;</h3>
+      <div class="checklist">
+        <div class="check-item"><span class="check-icon check-done">&check;</span> 4 BDD scenarios in .feature files</div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> Step stubs wired via Behave</div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> Scenarios 2-4 raise NotImplementedError</div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> README with setup instructions</div>
+      </div>
+    </div>
+    <div class="col">
+      <h3 style="color: #34d399;">Deliverable 2 &check;</h3>
+      <div class="checklist">
+        <div class="check-item"><span class="check-icon check-done">&check;</span> Full implementation of Scenario 1</div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> Acceptance test passes end-to-end</div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> CHANGELOG.md</div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> Release tag <code>prototype-1</code></div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> Code comments referencing scenarios</div>
+      </div>
+    </div>
+  </div>
+  <div class="progress-bar" style="margin-top: 40px;">
+    <div class="progress-fill" style="width: 25%;"></div>
+  </div>
+  <p style="color: #94a3b8; margin-top: 10px;">1 of 4 scenarios implemented (25%)</p>
+</div>
+
+<!-- SLIDE 13: Deliverable 2 Deep Dive -->
+<div class="slide" id="slide-13">
+  <h2>Deliverable 2: Prototype of Scenario 1</h2>
+  <div class="two-col">
+    <div class="col">
+      <h3 style="color: #60a5fa;">Implementation</h3>
+      <div class="item-text" style="line-height: 1.9; font-size: 0.95rem;">
+        <strong>app.py</strong> &mdash; Flask routes<br>
+        &nbsp;&nbsp;&bull; <code>/login</code> &mdash; POST authenticates, sets session<br>
+        &nbsp;&nbsp;&bull; <code>/create-test</code> &mdash; GET shows form, POST saves to DB<br>
+        &nbsp;&nbsp;&bull; <code>/tests</code> &mdash; lists all tests with status<br><br>
+        <strong>db.py</strong> &mdash; SQLite helpers<br>
+        &nbsp;&nbsp;&bull; <code>init_db()</code> &mdash; creates test_scenarios table<br>
+        &nbsp;&nbsp;&bull; <code>insert_test()</code> &mdash; stores name, URL, steps, outcome<br>
+        &nbsp;&nbsp;&bull; <code>reset_db()</code> &mdash; clean state between scenarios<br><br>
+        <strong>templates/</strong> &mdash; 3 HTML pages<br>
+        &nbsp;&nbsp;&bull; login.html, create_test.html, test_list.html
+      </div>
+    </div>
+    <div class="col">
+      <h3 style="color: #a78bfa;">Testing Infrastructure</h3>
+      <div class="item-text" style="line-height: 1.9; font-size: 0.95rem;">
+        <strong>environment.py</strong><br>
+        &nbsp;&nbsp;&bull; Starts Flask in background thread<br>
+        &nbsp;&nbsp;&bull; Launches headless Chromium via Selenium<br>
+        &nbsp;&nbsp;&bull; Resets DB before each scenario<br>
+        &nbsp;&nbsp;&bull; Tears down browser + server after all tests<br><br>
+        <strong>test_creation_steps.py</strong><br>
+        &nbsp;&nbsp;&bull; 9 step definitions (Given/When/Then)<br>
+        &nbsp;&nbsp;&bull; Real Selenium interactions (not mocks)<br>
+        &nbsp;&nbsp;&bull; Fills forms, clicks buttons, asserts content<br><br>
+        <strong>Deliverables</strong><br>
+        &nbsp;&nbsp;&bull; CHANGELOG.md with all changes since D1<br>
+        &nbsp;&nbsp;&bull; Git release tag <code>prototype-1</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: Demo / Run -->
+<div class="slide" id="slide-14">
+  <h2>Running the Tests</h2>
+  <div class="code-block" style="margin-bottom: 24px;">
+    <span class="comment"># Build the Docker container</span><br>
+    $ docker-compose build<br><br>
+    <span class="comment"># Run Scenario 1 (passes)</span><br>
+    $ docker-compose run --rm testflow behave acceptance_tests/test_creation.feature<br><br>
+    <span class="step">1 feature passed, 0 failed, 0 skipped</span><br>
+    <span class="step">1 scenario passed, 0 failed, 0 skipped</span><br>
+    <span class="step">9 steps passed, 0 failed, 0 skipped</span><br><br>
+    <span class="comment"># Run all tests (Scenarios 2-4 fail with NotImplementedError)</span><br>
+    $ docker-compose run --rm testflow behave acceptance_tests/
+  </div>
+</div>
+
+<!-- SLIDE 15: What's Next -->
+<div class="slide" id="slide-15">
+  <h2>What's Next</h2>
+  <div class="content-left">
+    <div class="item" style="border-left-color: #fbbf24;">
+      <div class="item-icon">&#9654;</div>
+      <div class="item-text"><strong>Scenario 2:</strong> Test execution engine &mdash; run saved tests, capture screenshots, collect performance metrics</div>
+    </div>
+    <div class="item" style="border-left-color: #fbbf24;">
+      <div class="item-icon">&#9654;</div>
+      <div class="item-text"><strong>Scenario 3:</strong> Failure reporting &mdash; detailed failure logs, screenshot at failure point, AI-powered diagnosis</div>
+    </div>
+    <div class="item" style="border-left-color: #f472b6;">
+      <div class="item-icon">&#9654;</div>
+      <div class="item-text"><strong>Scenario 4 (SWAP):</strong> Self-healing tests &mdash; AI detects broken selectors, auto-fixes them, flags for human review</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16: Thank You -->
+<div class="slide" id="slide-16">
+  <h1>Thank You</h1>
+  <div class="subtitle">Questions?</div>
+  <div style="margin-top: 30px;">
+    <span class="tag tag-blue">Flask + SQLite</span>
+    <span class="tag tag-purple">Selenium + Chromium</span>
+    <span class="tag tag-green">Behave BDD</span>
+    <span class="tag tag-pink">Docker</span>
+  </div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button onclick="prev()">&larr; Prev</button>
+  <button onclick="next()">Next &rarr;</button>
+</div>
+<div class="slide-counter" id="counter">1 / 16</div>
+
+<script>
+  let current = 1;
+  const total = 16;
+
+  function show(n) {
+    document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+    document.getElementById('slide-' + n).classList.add('active');
+    document.getElementById('counter').textContent = n + ' / ' + total;
+  }
+
+  function next() { if (current < total) { current++; show(current); } }
+  function prev() { if (current > 1) { current--; show(current); } }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+</script>
+
+</body>
+</html>
