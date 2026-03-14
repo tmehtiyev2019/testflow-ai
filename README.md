@@ -2,15 +2,16 @@
 
 ## Project Description
 
-A SaaS platform that tests applications from the user's perspective without requiring access to internal code. The platform validates complete user workflows across web applications, APIs, and mobile applications using AI-powered intelligent testing capabilities.
+A SaaS platform that tests applications from the user's perspective without requiring access to internal code. The platform validates complete user workflows across web applications using AI-powered intelligent testing capabilities.
 
 ### Key Features
 
 - **Natural Language Test Creation**: Define test scenarios in plain English without coding
-- **Automated Workflow Execution**: Execute multi-step user journeys with screenshot capture
-- **AI-Powered Test Intelligence**: Self-healing tests that adapt to UI changes and provide intelligent failure diagnosis
-- **Comprehensive Reporting**: Visual diff reports, performance metrics, and execution logs
-- **Smart Notifications**: Real-time alerts for test failures with actionable insights
+- **Real Browser Execution**: Selenium + BeautifulSoup execute tests against real target applications
+- **AI-Powered Step Parsing**: Google Gemini LLM translates natural language steps into Selenium commands
+- **Auto-Discovery**: Crawl any web app and auto-generate test scenarios with AI
+- **Comprehensive Reporting**: Real screenshots, performance metrics, and execution logs
+- **Smart Notifications**: Real-time alerts for test failures with AI-powered diagnosis
 
 ## Setup
 
@@ -35,7 +36,7 @@ docker-compose run --rm testflow behave --version
 # Expected output: behave 1.2.6
 ```
 
-## Running Tests
+## Running Acceptance Tests
 
 ### Run Scenario 1 (Test Creation)
 ```bash
@@ -44,6 +45,18 @@ docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
 
 Expected output:
 ```
+Feature: Test Scenario Creation
+  Scenario: Create a simple web application test using natural language
+    Given I am logged into the testing platform                                   # PASSED
+    When I navigate to the "Create Test" page                                     # PASSED
+    And I enter the test name "Checkout Flow Validation"                          # PASSED
+    And I enter the application URL "https://example-shop.com"                    # PASSED
+    And I provide the test steps in natural language:                             # PASSED
+    And I set expected outcome "Cart displays 1 item successfully"                # PASSED
+    And I click "Save Test"                                                       # PASSED
+    Then I should see a confirmation message "Test scenario created successfully" # PASSED
+    And the test should appear in my test list with status "Not Run"              # PASSED
+
 1 feature passed, 0 failed, 0 skipped
 1 scenario passed, 0 failed, 0 skipped
 9 steps passed, 0 failed, 0 skipped
@@ -56,6 +69,29 @@ docker-compose run --rm testflow behave acceptance_tests/test_execution.feature
 
 Expected output:
 ```
+Feature: Test Execution and Monitoring
+
+  Scenario: Execute a web application test and view results
+    Given I have a saved test scenario "User Login Flow"            # PASSED
+    And the test contains the following steps:                      # PASSED
+    When I click "Run Test" for "User Login Flow"                   # PASSED
+    And I wait for test execution to complete                       # PASSED
+    Then I should see test status as "Passed"                       # PASSED
+    And I should see execution time in seconds                      # PASSED
+    And I should see screenshots for each step                      # PASSED
+    And I should see performance metrics showing page load times    # PASSED
+
+  Scenario: View detailed failure report when test fails
+    Given I have a test scenario "Payment Processing"                                                           # PASSED
+    And the test is configured to verify "Payment confirmation message"                                         # PASSED
+    When I execute the test                                                                                     # PASSED
+    And the payment API returns a timeout error                                                                 # PASSED
+    Then I should see test status as "Failed"                                                                   # PASSED
+    And I should see failure message "Payment API timeout at step 7"                                            # PASSED
+    And I should see a screenshot of the failure point                                                          # PASSED
+    And I should see AI-powered diagnosis suggesting "Payment gateway may be down or experiencing high latency" # PASSED
+    And I should receive an email notification about the failure                                                # PASSED
+
 1 feature passed, 0 failed, 0 skipped
 2 scenarios passed, 0 failed, 0 skipped
 17 steps passed, 0 failed, 0 skipped
@@ -66,12 +102,123 @@ Expected output:
 docker-compose run --rm testflow behave acceptance_tests/test_creation.feature acceptance_tests/test_execution.feature
 ```
 
+Expected output:
+```
+2 features passed, 0 failed, 0 skipped
+3 scenarios passed, 0 failed, 0 skipped
+26 steps passed, 0 failed, 0 skipped
+```
+
 ### Run All Acceptance Tests
 ```bash
 docker-compose run --rm testflow behave acceptance_tests/
 ```
 
 Note: Scenarios 3-4 are not yet implemented and will error with `NotImplementedError`.
+
+## Running the Application (Interactive Mode with Real Target App)
+
+Beyond acceptance tests, TestFlow AI can execute tests against real web applications using Selenium + Gemini LLM. This section explains how to set up and use the interactive mode.
+
+### Prerequisites
+
+- **Python 3.11+** installed locally
+- **Google Chrome** installed (Selenium uses it in headless mode)
+- **Docker Desktop** installed and running (for the target application)
+- **Google Gemini API key** (for AI-powered step parsing and scenario generation)
+
+### Step 1: Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Step 2: Configure Gemini API Key
+
+Create a config file with your Gemini API key:
+
+```bash
+mkdir -p .claude
+echo "gemini_token='YOUR_GEMINI_API_KEY'" > .claude/.config
+```
+
+You can get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
+
+### Step 3: Deploy a Target Application (Kanboard)
+
+The project uses [Kanboard](https://kanboard.org/) (open-source project management tool) as a demo target application:
+
+```bash
+docker run -d -p 8080:80 --name kanboard kanboard/kanboard
+```
+
+Verify it is running:
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8080
+# Expected: 200
+```
+
+Kanboard will be available at `http://localhost:8080` with default credentials:
+- **Username**: `admin`
+- **Password**: `admin`
+
+### Step 4: Start TestFlow AI
+
+```bash
+python3 -c "from src.app import create_app; app = create_app(); app.run(port=5001)"
+```
+
+Open `http://localhost:5001` in your browser and login with:
+- **Email**: `test@example.com`
+- **Password**: `password123`
+
+### Step 5: Create and Run a Test (Manual)
+
+1. Click **"+ New Test"**
+2. Fill in:
+   - **Name**: `Kanboard Login & Create Project`
+   - **URL**: `http://localhost:8080`
+   - **Steps**:
+     ```
+     Log into the application using admin as both username and password
+     After logging in, click on New project
+     Type My Demo Project as the project name
+     Save the project
+     ```
+   - **Expected Outcome**: `My Demo Project`
+3. Click **"Save Test"**
+4. Click **"Run Test"** — a loading overlay shows progress while:
+   - Headless Chrome launches and navigates to Kanboard
+   - BeautifulSoup discovers page elements
+   - Gemini LLM translates steps to Selenium commands
+   - Selenium executes each action with real screenshots
+5. View results: status, execution time, real screenshots, performance metrics
+
+### Step 6: Auto-Discover Test Scenarios (AI Discover)
+
+Instead of writing tests manually, let AI generate them:
+
+1. Click **"AI Discover"** (or go to `/discover`)
+2. Enter:
+   - **URL**: `http://localhost:8080`
+   - **Scenarios**: 3
+   - **Complexity**: Medium (3-5 steps)
+   - **Crawl Depth**: Normal (3 pages)
+   - Select focus areas: **CRUD Operations**, **Authentication**
+   - **Notes**: `username: admin, password: admin. Focus on project management features.`
+3. Click **"Discover Test Scenarios"** — the system will:
+   - Crawl Kanboard (login page → dashboard → project creation page)
+   - Send discovered elements to Gemini LLM
+   - Generate 3 diverse test scenarios
+4. Review the generated scenarios, uncheck any you don't want
+5. Click **"Save Selected Tests"**
+6. Run them from the test list
+
+### Stopping the Target Application
+
+```bash
+docker stop kanboard && docker rm kanboard
+```
 
 ## Technology Stack
 
@@ -102,13 +249,21 @@ When acceptance tests run, the following happens inside the Docker container:
 
 When running the app manually against a real target application:
 
-1. User creates a test scenario via the web UI or uses AI Discover to auto-generate scenarios
-2. User clicks "Run Test" — the engine launches a headless Chrome browser
-3. BeautifulSoup crawls the target application to discover interactive elements (forms, inputs, buttons, links)
-4. Natural language test steps + discovered elements are sent to Google Gemini LLM
-5. Gemini returns structured Selenium commands (enter, click, navigate, verify, etc.)
-6. Selenium executes each command against the real target app, taking screenshots and measuring performance
-7. Results (pass/fail, screenshots, metrics, diagnosis) are saved to SQLite and displayed on the results page
+```
+User enters natural language steps
+        ↓
+BeautifulSoup crawls target app → discovers forms, inputs, buttons, links
+        ↓
+Steps + discovered elements → sent to Gemini LLM
+        ↓
+Gemini returns structured Selenium commands (enter, click, navigate, verify)
+        ↓
+Selenium executes each command against real target app
+        ↓
+Real screenshots + performance metrics saved to SQLite
+        ↓
+Results displayed on web UI (pass/fail, screenshots, timing, AI diagnosis)
+```
 
 ## Acceptance Test Scenarios
 
@@ -180,4 +335,17 @@ docker-compose build --no-cache
 docker-compose down
 docker-compose build
 docker-compose run --rm testflow behave acceptance_tests/test_creation.feature
+```
+
+### Kanboard container won't start (port 8080 in use)
+```bash
+docker stop kanboard && docker rm kanboard
+docker run -d -p 8080:80 --name kanboard kanboard/kanboard
+```
+
+### Real execution fails with "No available Gemini model"
+Ensure your Gemini API key is valid and saved in `.claude/.config`:
+```bash
+cat .claude/.config
+# Should show: gemini_token='AIza...'
 ```
