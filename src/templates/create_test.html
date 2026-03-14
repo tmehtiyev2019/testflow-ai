@@ -24,6 +24,67 @@
 
   <div class="divider"></div>
 
+  <!-- Scenario 2: Test flow templates — gives users guidance on common test patterns -->
+  <div class="templates-section">
+    <label>Quick Start Templates</label>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">
+      Select a template to auto-fill the form, then customize for your application.
+    </p>
+    <div class="template-grid">
+
+      <button type="button" class="template-card" onclick="applyTemplate('login')">
+        <span class="template-icon">&#x1F511;</span>
+        <span class="template-title">User Login Flow</span>
+        <span class="template-desc">Authenticate and verify dashboard access</span>
+      </button>
+
+      <button type="button" class="template-card" onclick="applyTemplate('registration')">
+        <span class="template-icon">&#x1F4DD;</span>
+        <span class="template-title">User Registration</span>
+        <span class="template-desc">Sign up, verify email, complete profile</span>
+      </button>
+
+      <button type="button" class="template-card" onclick="applyTemplate('checkout')">
+        <span class="template-icon">&#x1F6D2;</span>
+        <span class="template-title">E-Commerce Checkout</span>
+        <span class="template-desc">Add to cart, enter payment, confirm order</span>
+      </button>
+
+      <button type="button" class="template-card" onclick="applyTemplate('search')">
+        <span class="template-icon">&#x1F50D;</span>
+        <span class="template-title">Search & Filter</span>
+        <span class="template-desc">Search items, apply filters, verify results</span>
+      </button>
+
+      <button type="button" class="template-card" onclick="applyTemplate('form')">
+        <span class="template-icon">&#x1F4CB;</span>
+        <span class="template-title">Form Submission</span>
+        <span class="template-desc">Fill form, validate inputs, submit and confirm</span>
+      </button>
+
+      <button type="button" class="template-card" onclick="applyTemplate('navigation')">
+        <span class="template-icon">&#x1F9ED;</span>
+        <span class="template-title">Navigation & Links</span>
+        <span class="template-desc">Verify page links, menus, and breadcrumbs</span>
+      </button>
+
+      <button type="button" class="template-card" onclick="applyTemplate('profile')">
+        <span class="template-icon">&#x1F464;</span>
+        <span class="template-title">Profile Update</span>
+        <span class="template-desc">Edit user settings, save, verify changes</span>
+      </button>
+
+      <button type="button" class="template-card" onclick="applyTemplate('api_health')">
+        <span class="template-icon">&#x1F4E1;</span>
+        <span class="template-title">API Health Check</span>
+        <span class="template-desc">Verify endpoints respond correctly</span>
+      </button>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
   <form method="post">
     <div class="form-group">
       <label for="test_name">Test Name</label>
@@ -37,7 +98,7 @@
 
     <div class="form-group">
       <label for="steps_raw">Test Steps (natural language)</label>
-      <textarea id="steps_raw" name="steps_raw" rows="6" placeholder="1. Navigate to the login page&#10;2. Enter username and password&#10;3. Click the Sign In button&#10;4. Verify the dashboard loads" required></textarea>
+      <textarea id="steps_raw" name="steps_raw" rows="8" placeholder="1. Navigate to the login page&#10;2. Enter username and password&#10;3. Click the Sign In button&#10;4. Verify the dashboard loads" required></textarea>
     </div>
 
     <div class="form-group">
@@ -53,4 +114,121 @@
     </div>
   </form>
 </div>
+
+<script>
+// Scenario 2: test flow templates — pre-defined patterns for common user journeys
+const templates = {
+  login: {
+    name: "User Login Flow",
+    url: "https://myapp.com",
+    steps: "1. Navigate to the login page\n2. Verify login form is displayed with email and password fields\n3. Enter email \"user@example.com\" in the email field\n4. Enter password \"securePass123\" in the password field\n5. Click the \"Sign In\" button\n6. Wait for page redirect\n7. Verify the user dashboard page loads\n8. Verify the welcome message displays the user's name",
+    outcome: "User is authenticated and redirected to the dashboard with a welcome message"
+  },
+  registration: {
+    name: "New User Registration",
+    url: "https://myapp.com",
+    steps: "1. Navigate to the registration page\n2. Verify the sign-up form is displayed\n3. Enter first name \"John\" and last name \"Doe\"\n4. Enter email \"newuser@example.com\"\n5. Enter password \"StrongPass123!\" and confirm password\n6. Accept terms and conditions checkbox\n7. Click the \"Create Account\" button\n8. Verify confirmation message appears\n9. Check email for verification link\n10. Verify account is active after email confirmation",
+    outcome: "New account is created, verification email is sent, and user can log in"
+  },
+  checkout: {
+    name: "E-Commerce Checkout Flow",
+    url: "https://myshop.com",
+    steps: "1. Navigate to the homepage\n2. Search for product \"Wireless Headphones\"\n3. Click on the first search result\n4. Verify product details page loads with price and description\n5. Select quantity \"1\" and click \"Add to Cart\"\n6. Verify cart icon shows 1 item\n7. Click on the cart icon to view cart\n8. Verify cart shows correct item and price\n9. Click \"Proceed to Checkout\"\n10. Enter shipping address details\n11. Select shipping method \"Standard Delivery\"\n12. Enter payment card details\n13. Click \"Place Order\"\n14. Verify order confirmation page with order number",
+    outcome: "Order is placed successfully and confirmation page displays order number and estimated delivery date"
+  },
+  search: {
+    name: "Search and Filter Products",
+    url: "https://myshop.com",
+    steps: "1. Navigate to the homepage\n2. Enter \"laptop\" in the search bar\n3. Click the search button or press Enter\n4. Verify search results page loads with matching products\n5. Verify result count is displayed (e.g., \"24 results found\")\n6. Apply filter: Price range \"$500 - $1000\"\n7. Verify results update to show only items in price range\n8. Apply filter: Brand \"Dell\"\n9. Verify results narrow further\n10. Sort results by \"Price: Low to High\"\n11. Verify first result has the lowest price\n12. Click on the first product to verify detail page loads",
+    outcome: "Search returns relevant results, filters narrow the results correctly, and sorting works as expected"
+  },
+  form: {
+    name: "Contact Form Submission",
+    url: "https://myapp.com",
+    steps: "1. Navigate to the \"Contact Us\" page\n2. Verify the contact form is displayed\n3. Leave all fields empty and click \"Submit\"\n4. Verify validation errors appear for required fields\n5. Enter name \"Jane Smith\"\n6. Enter an invalid email \"notanemail\" and click Submit\n7. Verify email validation error appears\n8. Correct email to \"jane@example.com\"\n9. Select subject \"Technical Support\" from dropdown\n10. Enter message \"I need help with my account settings\"\n11. Click \"Submit\" button\n12. Verify success message \"Your message has been sent\" appears",
+    outcome: "Form validates inputs correctly, rejects invalid data, and shows success confirmation on valid submission"
+  },
+  navigation: {
+    name: "Site Navigation Verification",
+    url: "https://myapp.com",
+    steps: "1. Navigate to the homepage\n2. Verify the main navigation menu is visible\n3. Click on \"Products\" menu item\n4. Verify Products page loads with correct heading\n5. Click on \"About Us\" menu item\n6. Verify About page loads with company information\n7. Click on \"Contact\" menu item\n8. Verify Contact page loads with contact form\n9. Click the site logo to return to homepage\n10. Verify homepage loads correctly\n11. Scroll to footer and verify footer links are present\n12. Click \"Privacy Policy\" footer link and verify page loads",
+    outcome: "All navigation links work correctly, pages load with expected content, and logo returns to homepage"
+  },
+  profile: {
+    name: "User Profile Update",
+    url: "https://myapp.com",
+    steps: "1. Log in with valid credentials\n2. Navigate to \"My Profile\" or \"Account Settings\"\n3. Verify current profile information is displayed\n4. Click \"Edit Profile\" button\n5. Change display name from \"John\" to \"Jonathan\"\n6. Upload a new profile picture\n7. Update phone number to \"+1-555-0199\"\n8. Click \"Save Changes\" button\n9. Verify success message \"Profile updated successfully\"\n10. Refresh the page\n11. Verify all changes are persisted (name, picture, phone)",
+    outcome: "Profile changes are saved successfully and persist after page refresh"
+  },
+  api_health: {
+    name: "API Health Check",
+    url: "https://api.myapp.com",
+    steps: "1. Send GET request to /health endpoint\n2. Verify response status is 200 OK\n3. Verify response body contains {\"status\": \"healthy\"}\n4. Send GET request to /api/v1/status\n5. Verify API version is returned in response\n6. Verify response time is under 500ms\n7. Send GET request to /api/v1/users (authenticated)\n8. Verify response returns a list of users\n9. Send GET request to an invalid endpoint /api/v1/nonexistent\n10. Verify response status is 404 with error message",
+    outcome: "All API endpoints respond correctly with expected status codes and response times within acceptable limits"
+  }
+};
+
+function applyTemplate(key) {
+  const t = templates[key];
+  document.getElementById('test_name').value = t.name;
+  document.getElementById('application_url').value = t.url;
+  document.getElementById('steps_raw').value = t.steps;
+  document.getElementById('expected_outcome').value = t.outcome;
+
+  // Highlight the selected template card
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('template-selected'));
+  event.currentTarget.classList.add('template-selected');
+
+  // Scroll to form
+  document.getElementById('test_name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+</script>
+
+<style>
+  .templates-section {
+    margin: 0.5rem 0;
+  }
+  .template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .template-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 12px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    color: var(--text);
+    font-family: inherit;
+  }
+  .template-card:hover {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+    transform: translateY(-1px);
+  }
+  .template-card.template-selected {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+  }
+  .template-icon {
+    font-size: 1.4rem;
+  }
+  .template-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  .template-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+  }
+</style>
 {% endblock %}

@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Results - {{ test.name }} - TestFlow AI{% endblock %}
+
+{% block navbar %}
+<nav>
+  <a href="/" class="nav-brand">
+    <div class="logo">TF</div>
+    TestFlow AI
+  </a>
+  <div class="nav-links">
+    <a href="/tests">Tests</a>
+    <a href="/create-test">Create</a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="card card-wide">
+  <div class="header-row">
+    <div class="page-header" style="margin-bottom: 0;">
+      <h1>{{ test.name }}</h1>
+      <p>Test execution results</p>
+    </div>
+    <a href="/tests" class="btn btn-secondary">Back to Tests</a>
+  </div>
+
+  <div class="divider"></div>
+
+  {% if run %}
+  <!-- Scenario 2: test status display (step: "I should see test status as") -->
+  <div class="result-summary">
+    <div class="result-item">
+      <span class="result-label">Status</span>
+      <span class="status-badge test-run-status {% if run.status == 'Passed' %}status-passed{% else %}status-failed{% endif %}">
+        {{ run.status }}
+      </span>
+    </div>
+
+    <!-- Scenario 2: execution time (step: "I should see execution time in seconds") -->
+    <div class="result-item">
+      <span class="result-label">Execution Time</span>
+      <span class="execution-time">{{ run.execution_time }}s</span>
+    </div>
+
+    <div class="result-item">
+      <span class="result-label">Executed At</span>
+      <span style="color: var(--text-muted);">{{ run.created_at }}</span>
+    </div>
+  </div>
+
+  {% if run.status == 'Failed' %}
+  <div class="divider"></div>
+
+  <!-- Scenario 2B: failure message (step: "I should see failure message") -->
+  <div class="failure-section">
+    <h3>Failure Details</h3>
+    <div class="failure-message">
+      <span class="result-label">Error</span>
+      <p class="failure-text">{{ run.failure_message }}</p>
+    </div>
+
+    <!-- Scenario 2B: AI diagnosis (step: "AI-powered diagnosis suggesting") -->
+    {% if run.diagnosis %}
+    <div class="diagnosis-section">
+      <span class="result-label">AI Diagnosis</span>
+      <p class="diagnosis-text">{{ run.diagnosis }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Scenario 2B: email notification (step: "receive an email notification") -->
+    {% if run.email_sent %}
+    <div class="email-notification">
+      <span class="result-label">Notification</span>
+      <p class="email-sent-text">Email notification sent to team about test failure.</p>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="divider"></div>
+
+  <!-- Scenario 2A: screenshots for each step (step: "screenshots for each step") -->
+  <div class="screenshots-section">
+    <h3>Step Screenshots</h3>
+    <div class="screenshot-grid">
+      {% for screenshot in run.screenshots %}
+      <div class="screenshot-item">
+        <a href="{{ screenshot }}" target="_blank">
+          <img src="{{ screenshot }}" alt="Step {{ loop.index }} screenshot" class="screenshot-img"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="screenshot-placeholder" style="display:none;">
+            <span>Step {{ loop.index }}</span>
+          </div>
+        </a>
+        <p class="screenshot-path">Step {{ loop.index }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Scenario 2A: performance metrics (step: "performance metrics showing page load times") -->
+  <div class="performance-section">
+    <h3>Performance Metrics</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Page Load Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for step_key, load_time in run.performance.items() %}
+        <tr>
+          <td class="metric-step">{{ step_key }}</td>
+          <td class="metric-value">{{ load_time }}s</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <p>No execution results yet. Run this test first.</p>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .result-summary {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+  }
+  .result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .result-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .execution-time {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-light);
+  }
+  .failure-section {
+    margin: 1rem 0;
+  }
+  .failure-section h3, .screenshots-section h3, .performance-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+  .failure-message, .diagnosis-section, .email-notification {
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .failure-text {
+    color: var(--accent-red);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .diagnosis-section {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.2);
+  }
+  .diagnosis-text {
+    color: var(--primary-light);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .email-notification {
+    background: rgba(251, 191, 36, 0.08);
+    border-color: rgba(251, 191, 36, 0.2);
+  }
+  .email-sent-text {
+    color: var(--accent-yellow);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .screenshot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+  }
+  .screenshot-img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: transform 0.2s;
+    cursor: pointer;
+  }
+  .screenshot-img:hover {
+    transform: scale(1.05);
+    border-color: var(--primary-light);
+  }
+  .screenshot-placeholder {
+    width: 100%;
+    height: 90px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+  .screenshot-path {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    word-break: break-all;
+  }
+  .metric-step {
+    text-transform: capitalize;
+  }
+  .metric-value {
+    color: var(--primary-light);
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
