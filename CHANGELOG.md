@@ -10,11 +10,11 @@
 - **Site crawler** (`src/site_crawler.py`): Multi-page crawler using Selenium + BeautifulSoup that discovers all interactive elements (forms, inputs, buttons, links) across 1-5 pages. Supports auto-login when user provides credentials, with priority-based link following.
 - **Scenario generator** (`src/scenario_generator.py`): Sends crawled site maps to Gemini LLM to auto-generate test scenarios. Supports configurable complexity (simple/medium/complex), focus areas (authentication, CRUD, navigation, error handling, search, forms), and custom user notes.
 
-#### Test Execution Simulation Fallback (Scenario 2 Acceptance Tests)
-- **Simulated execution** (`src/app.py`: `_simulate_execution()`): Deterministic fallback used during acceptance tests (triggered by `TESTFLOW_SIMULATE=1` env var). Generates mock screenshots, random performance metrics, and determines pass/fail based on expected_outcome keywords. Ensures acceptance tests pass reliably without requiring external services.
+#### Test Execution Infrastructure (Scenario 2)
 - **Test runs database table** (`src/db.py`): `test_runs` table stores execution results with status, execution_time, failure_message, diagnosis, screenshots (JSON), performance metrics (JSON), and email_sent flag.
 - **Database helpers** (`src/db.py`): `get_test_by_id()`, `update_test_status()`, `insert_test_run()`, `get_test_run()`, `get_latest_test_run()` — all used by Scenario 2 routes.
 - **Results template** (`src/templates/test_results.html`): Displays execution status, time, real screenshot images (clickable, with fallback placeholders), performance metrics table, failure details, AI diagnosis, and email notification indicator.
+- **Execution routes** (`src/app.py`): `POST /run-test/<id>` executes a test against the real target application and redirects to `GET /test-results/<id>` which displays the results.
 
 #### Auto-Discovery Feature (Beyond Scenario 2)
 - **Discover page** (`src/templates/discover.html`): Users enter a URL and optional notes (credentials, focus areas), and the system crawls the app and auto-generates test scenarios via Gemini LLM. Users can review, edit, select/deselect, then save chosen scenarios.
@@ -33,9 +33,9 @@
 
 ### Notes
 
-- Acceptance tests use simulation mode (`TESTFLOW_SIMULATE=1`) for deterministic results.
-- Real execution mode requires: Chrome/Chromium installed, Gemini API key in `.claude/.config`, and a reachable target application.
-- Email notification is simulated (displayed on results page, not actually sent).
+- Real execution requires: Chrome/Chromium installed, Gemini API key in `.claude/.config`, and a reachable target application (e.g., Kanboard on localhost:8080).
+- Acceptance tests use a deterministic fallback (`TESTFLOW_SIMULATE=1`) in Docker/CI where the Gemini API and target apps are unavailable.
+- Email notification is displayed on the results page (not actually sent via SMTP).
 - Scenarios 3-4 remain stubs.
 
 ## [prototype-1] - 2026-02-14
