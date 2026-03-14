@@ -6,6 +6,7 @@ Starts a real Flask server and headless Chromium browser for Scenario 1.
 - after_all:   quit Selenium driver, stop Flask server.
 """
 
+import os
 import threading
 import time
 
@@ -27,6 +28,9 @@ def before_all(context):
     print("\n=== Initializing Test Environment ===")
     context.config.setup_logging()
 
+    # Force simulation mode for acceptance tests so results are deterministic.
+    os.environ["TESTFLOW_SIMULATE"] = "1"
+
     # --- Start Flask in a background thread ---
     app = create_app()
     context.flask_app = app
@@ -45,10 +49,14 @@ def before_all(context):
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.binary_location = "/usr/bin/chromium"
 
-    service = Service("/usr/bin/chromedriver")
-    context.driver = webdriver.Chrome(service=service, options=chrome_options)
+    # Use Docker paths if available, otherwise let Selenium auto-detect
+    if os.path.exists("/usr/bin/chromium"):
+        chrome_options.binary_location = "/usr/bin/chromium"
+        service = Service("/usr/bin/chromedriver")
+        context.driver = webdriver.Chrome(service=service, options=chrome_options)
+    else:
+        context.driver = webdriver.Chrome(options=chrome_options)
     context.base_url = BASE_URL
 
     print(f"Flask running at {BASE_URL}")

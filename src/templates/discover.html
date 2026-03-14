@@ -38,7 +38,7 @@
 
     <div class="options-row">
       <div class="form-group" style="flex:1;">
-        <label for="num_scenarios">Number of Test Scenarios</label>
+        <label for="num_scenarios">Scenarios</label>
         <select id="num_scenarios" name="num_scenarios">
           <option value="2" {{ 'selected' if request.form.get('num_scenarios') == '2' }}>2 scenarios</option>
           <option value="3" {{ 'selected' if request.form.get('num_scenarios', '3') == '3' }}>3 scenarios</option>
@@ -46,7 +46,7 @@
         </select>
       </div>
       <div class="form-group" style="flex:1;">
-        <label for="complexity">Test Complexity</label>
+        <label for="complexity">Complexity</label>
         <select id="complexity" name="complexity">
           <option value="simple" {{ 'selected' if request.form.get('complexity') == 'simple' }}>Simple (2-3 steps)</option>
           <option value="medium" {{ 'selected' if request.form.get('complexity', 'medium') == 'medium' }}>Medium (3-5 steps)</option>
@@ -186,9 +186,18 @@
 
 <style>
   .options-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 1rem;
     margin-bottom: 0;
+  }
+  .options-row .form-group {
+    min-width: 0;
+  }
+  .options-row label {
+    white-space: nowrap;
+    display: block;
+    min-height: 1.4em;
   }
   .options-row select {
     width: 100%;
@@ -197,8 +206,14 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     color: var(--text);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
   }
   .options-row select:focus {
     border-color: var(--primary);

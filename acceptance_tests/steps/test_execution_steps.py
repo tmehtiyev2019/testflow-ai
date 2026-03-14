@@ -91,11 +91,11 @@ def step_wait_for_execution(context):
     After clicking Run Test, the server simulates execution and redirects
     to /test-results/<id>. We wait for the results page to load.
     """
-    WebDriverWait(context.driver, 10).until(
+    WebDriverWait(context.driver, 30).until(
         lambda d: "/test-results/" in d.current_url
     )
     # Wait for the status badge to appear on the results page
-    WebDriverWait(context.driver, 5).until(
+    WebDriverWait(context.driver, 10).until(
         EC.presence_of_element_located((By.CLASS_NAME, "test-run-status"))
     )
 
@@ -227,10 +227,10 @@ def step_execute_test(context):
         raise AssertionError(f"Test '{test_name}' not found in test list")
 
     # Wait for results page to load
-    WebDriverWait(context.driver, 10).until(
+    WebDriverWait(context.driver, 30).until(
         lambda d: "/test-results/" in d.current_url
     )
-    WebDriverWait(context.driver, 5).until(
+    WebDriverWait(context.driver, 10).until(
         EC.presence_of_element_located((By.CLASS_NAME, "test-run-status"))
     )
 

@@ -48,6 +48,9 @@ screenshots/
 .env
 .env.local
 
+# Claude Code config (may contain API keys)
+.claude/
+
 # Coverage
 .coverage
 htmlcov/

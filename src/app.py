@@ -2,18 +2,35 @@
 
 This module implements the web UI that acceptance tests drive via Selenium.
 
-Scenario 1 flow:
+Scenario 1 flow (Test Creation):
     1. GET  /login       → user sees login form       (step: "I am logged into the testing platform")
     2. POST /login       → authenticate, redirect      (step: "I am logged into the testing platform")
     3. GET  /create-test → user sees creation form     (step: "I navigate to the Create Test page")
     4. POST /create-test → save test, flash message    (step: "I click Save Test")
     5. GET  /tests       → user sees test in list      (step: "test should appear in my test list")
 
-Scenario 2 flow:
-    6. POST /run-test/<id>      → simulate execution, redirect to results
+Scenario 2 flow (Test Execution and Monitoring):
+    6. POST /run-test/<id>      → execute test (real or simulated), redirect to results
     7. GET  /test-results/<id>  → display execution results page
+
+    Real execution mode (interactive use):
+        - Launches headless Chrome via test_runner.execute_test()
+        - BeautifulSoup discovers page elements on target application
+        - Gemini LLM translates natural language steps → Selenium commands
+        - Selenium executes actions, takes real screenshots, measures performance
+
+    Simulation mode (acceptance tests, TESTFLOW_SIMULATE=1):
+        - _simulate_execution() generates deterministic mock results
+        - Pass/fail determined by expected_outcome keywords
+        - Used in Docker/CI where Gemini API is unavailable
+
+Auto-Discovery flow (beyond core scenarios):
+    8. GET  /discover           → URL input form with AI options
+    9. POST /discover           → crawl target app, generate scenarios via Gemini
+   10. POST /save-discovered    → save selected scenarios to database
 """
 
+import os
 import time
 import random
 import json
@@ -155,16 +172,19 @@ def create_app() -> Flask:
             flash("Test not found", "error")
             return redirect(url_for("test_list"))
 
-        # Try real execution first, fall back to simulation
-        try:
-            result = execute_test(
-                application_url=test["application_url"],
-                steps_raw=test["steps_raw"],
-                expected_outcome=test["expected_outcome"],
-            )
-        except Exception:
-            # Fallback: simulated execution (used during acceptance tests in Docker)
+        # Use simulation mode if TESTFLOW_SIMULATE is set (acceptance tests),
+        # otherwise try real execution with fallback to simulation.
+        if os.environ.get("TESTFLOW_SIMULATE") == "1":
             result = _simulate_execution(test)
+        else:
+            try:
+                result = execute_test(
+                    application_url=test["application_url"],
+                    steps_raw=test["steps_raw"],
+                    expected_outcome=test["expected_outcome"],
+                )
+            except Exception:
+                result = _simulate_execution(test)
 
         # Store the run results (Scenario 2: all result fields)
         run_id = insert_test_run(

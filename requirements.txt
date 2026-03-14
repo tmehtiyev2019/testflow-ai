@@ -10,6 +10,9 @@ selenium>=4.0.0
 # HTML Parsing (used by test runner for element discovery)
 beautifulsoup4>=4.12.0
 
+# LLM Integration (Gemini API for NL step parsing and scenario generation)
+google-genai>=1.0.0
+
 # API Testing
 requests>=2.28.0
 
