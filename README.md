@@ -222,48 +222,178 @@ docker stop kanboard && docker rm kanboard
 
 ## Technology Stack
 
-- **Web Application**: Flask (Python) with server-side HTML templates
-- **Database**: SQLite
-- **Browser Automation**: Selenium + headless Chromium
-- **HTML Parsing**: BeautifulSoup (page element discovery)
-- **LLM Integration**: Google Gemini API (natural language → Selenium commands, auto scenario generation)
-- **Testing Framework**: Behave (BDD / Gherkin)
-- **Containerization**: Docker
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Web Application** | Flask (Python) | Server-side rendering, routes, session management |
+| **Database** | SQLite | Stores users, test scenarios, and execution results |
+| **Browser Automation** | Selenium + headless Chromium | Drives a real browser against target applications |
+| **HTML Parsing** | BeautifulSoup | Crawls target pages, discovers interactive elements |
+| **LLM Integration** | Google Gemini API | Translates natural language → Selenium commands, auto-generates test scenarios |
+| **Testing Framework** | Behave (BDD / Gherkin) | Acceptance tests with Given/When/Then syntax |
+| **Containerization** | Docker | Reproducible test environment with Chromium pre-installed |
 
-## How It Works
+## Architecture
+
+### System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        TestFlow AI Platform                         │
+│                                                                     │
+│  ┌──────────────┐   ┌──────────────┐   ┌────────────────────────┐  │
+│  │   Flask Web   │   │   SQLite DB  │   │   Jinja2 Templates     │  │
+│  │   Application │◄─►│              │   │                        │  │
+│  │              │   │  - users     │   │  - login/register      │  │
+│  │  /login      │   │  - scenarios │   │  - create_test         │  │
+│  │  /create-test│   │  - test_runs │   │  - test_list           │  │
+│  │  /tests      │   │              │   │  - test_results        │  │
+│  │  /run-test   │   └──────────────┘   │  - discover            │  │
+│  │  /discover   │                       └────────────────────────┘  │
+│  └──────┬───────┘                                                   │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │              Test Execution Engine                           │    │
+│  │                                                             │    │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐   │    │
+│  │  │ Selenium    │  │ BeautifulSoup│  │ Gemini LLM       │   │    │
+│  │  │ WebDriver   │  │ HTML Parser  │  │ (Google API)     │   │    │
+│  │  │             │  │              │  │                  │   │    │
+│  │  │ Drives      │  │ Discovers    │  │ Translates NL    │   │    │
+│  │  │ headless    │◄─┤ forms,inputs │─►│ steps into       │   │    │
+│  │  │ Chrome      │  │ buttons,links│  │ Selenium actions │   │    │
+│  │  │ browser     │  │              │  │                  │   │    │
+│  │  └─────────────┘  └──────────────┘  └──────────────────┘   │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌─────────────────────────────┐                                    │
+│  │   Target Application        │                                    │
+│  │   (e.g., Kanboard on :8080) │                                    │
+│  └─────────────────────────────┘                                    │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### How Each Component Works Together
+
+**The core insight**: Selenium alone cannot understand natural language. BeautifulSoup alone can discover elements but cannot act on them. The LLM alone doesn't know what elements exist on the page. By combining all three, each handles what it's best at:
+
+| Component | Role | What It's Good At | What It Can't Do |
+|---|---|---|---|
+| **BeautifulSoup** | Element Discovery | Parsing HTML, finding all forms/inputs/buttons with 100% accuracy | Cannot interact with the page or understand intent |
+| **Gemini LLM** | Natural Language Understanding | Mapping "click the login button" to `{action: click, target: "Sign in"}` | Cannot see or interact with the actual page |
+| **Selenium** | Browser Automation | Clicking buttons, typing text, taking screenshots, measuring load times | Cannot understand natural language or discover elements intelligently |
+
+### Test Execution Pipeline (Stage by Stage)
+
+```
+STAGE 1: ELEMENT DISCOVERY (BeautifulSoup)
+┌──────────────────────────────────────────────────────────────┐
+│ Input: Target URL (e.g., http://localhost:8080)               │
+│                                                              │
+│ Selenium opens the URL in headless Chrome                    │
+│         ↓                                                    │
+│ BeautifulSoup parses the HTML and extracts:                  │
+│   • Forms: action="/login/check", method="post"              │
+│   • Inputs: username (text), password (password)             │
+│   • Buttons: "Sign in" (submit)                              │
+│   • Links: "Forgot password?" → /forgot-password             │
+│                                                              │
+│ Output: Structured element map (JSON)                        │
+└──────────────────────────────────────────────────────────────┘
+                          ↓
+STAGE 2: STEP TRANSLATION (Gemini LLM)
+┌──────────────────────────────────────────────────────────────┐
+│ Input: User's natural language steps + discovered elements    │
+│                                                              │
+│ Prompt sent to Gemini:                                       │
+│   "Here are the page elements: [username input, password     │
+│    input, Sign in button]. The user wants to:                │
+│    'Log in with admin credentials and create a project'      │
+│    Convert to Selenium actions."                             │
+│         ↓                                                    │
+│ Gemini returns structured JSON:                              │
+│   [                                                          │
+│     {action: "enter", target: "username", value: "admin"},   │
+│     {action: "enter", target: "password", value: "admin"},   │
+│     {action: "click", target: "Sign in"},                    │
+│     {action: "click", target: "New project"},                │
+│     {action: "enter", target: "name", value: "My Project"},  │
+│     {action: "click", target: "Save"}                        │
+│   ]                                                          │
+│                                                              │
+│ Output: Ordered list of Selenium commands                    │
+└──────────────────────────────────────────────────────────────┘
+                          ↓
+STAGE 3: EXECUTION (Selenium WebDriver)
+┌──────────────────────────────────────────────────────────────┐
+│ For each action in the list:                                  │
+│                                                              │
+│   1. Find the element on the page (by name, id, text, etc.) │
+│   2. Execute the action (click, type, navigate)              │
+│   3. Take a screenshot (saved as real PNG)                   │
+│   4. Measure page load time                                  │
+│   5. If the page changed (click/navigate):                   │
+│      → Re-run Stage 1 to discover new elements              │
+│                                                              │
+│ If any step fails:                                           │
+│   • Capture failure screenshot                               │
+│   • Analyze page state for diagnosis                         │
+│   • Report available elements vs. expected element           │
+│                                                              │
+│ Output: Screenshots, performance metrics, pass/fail status   │
+└──────────────────────────────────────────────────────────────┘
+                          ↓
+STAGE 4: RESULTS (SQLite + Flask UI)
+┌──────────────────────────────────────────────────────────────┐
+│ All results saved to test_runs table:                         │
+│   • status: "Passed" or "Failed"                             │
+│   • execution_time: real seconds elapsed                     │
+│   • screenshots: JSON array of PNG file paths                │
+│   • performance: JSON object with per-step load times        │
+│   • failure_message: actual error from Selenium              │
+│   • diagnosis: AI analysis of what went wrong                │
+│   • email_sent: notification flag                            │
+│                                                              │
+│ Results page displays everything with clickable screenshots  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Auto-Discovery Pipeline
+
+When using the "AI Discover" feature, a separate pipeline runs:
+
+```
+URL + User Notes (credentials, focus areas)
+        ↓
+CRAWL: Selenium visits 1-5 pages, BeautifulSoup extracts elements from each
+  Page 1: Login (forms, inputs, buttons)
+  Page 2: Dashboard (links, navigation, search)
+  Page 3: Create Project (forms, fields)
+        ↓
+GENERATE: Full site map sent to Gemini LLM with user preferences
+  "Generate 3 medium-complexity test scenarios focused on CRUD and auth"
+        ↓
+REVIEW: User sees generated scenarios with checkboxes
+  ☑ Successful Login (authentication)
+  ☑ Create New Project (crud)
+  ☐ Navigate to Settings (navigation)
+        ↓
+SAVE: Selected scenarios stored in test_scenarios table, ready to run
+```
 
 ### Acceptance Tests (Simulation Mode)
 
-When acceptance tests run, the following happens inside the Docker container:
+When acceptance tests run (`TESTFLOW_SIMULATE=1`), the real execution engine is bypassed:
 
-1. Behave starts and `environment.py` launches a Flask server on port 5000 in a background thread
-2. `TESTFLOW_SIMULATE=1` is set to ensure deterministic test results
-3. A headless Chromium browser is opened via Selenium
-4. Step definitions use Selenium to navigate to pages, fill forms, and click buttons on the real Flask app
-5. Flask saves data to SQLite and renders HTML pages
-6. **Scenario 1**: Selenium creates a test via the form and verifies it appears in the list
-7. **Scenario 2**: Step definitions pre-seed test data, click "Run Test", and verify execution results (status, time, screenshots, metrics, failure details, AI diagnosis)
+1. Behave starts and `environment.py` launches Flask on port 5000 in a background thread
+2. A headless Chromium browser is opened via Selenium
+3. Step definitions use Selenium to navigate the TestFlow AI web UI
+4. `_simulate_execution()` returns deterministic mock results (no LLM or target app needed)
+5. **Scenario 1**: Selenium creates a test via the form and verifies it appears in the list
+6. **Scenario 2A**: Pre-seeded test runs → status "Passed", execution time, screenshots, metrics
+7. **Scenario 2B**: Pre-seeded failing test → status "Failed", error message, AI diagnosis, email notification
 8. After tests complete, the browser and server shut down
-
-### Real Execution Mode (Interactive Use)
-
-When running the app manually against a real target application:
-
-```
-User enters natural language steps
-        ↓
-BeautifulSoup crawls target app → discovers forms, inputs, buttons, links
-        ↓
-Steps + discovered elements → sent to Gemini LLM
-        ↓
-Gemini returns structured Selenium commands (enter, click, navigate, verify)
-        ↓
-Selenium executes each command against real target app
-        ↓
-Real screenshots + performance metrics saved to SQLite
-        ↓
-Results displayed on web UI (pass/fail, screenshots, timing, AI diagnosis)
-```
 
 ## Acceptance Test Scenarios
 
