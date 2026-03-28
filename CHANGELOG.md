@@ -1,5 +1,41 @@
 # Changelog
 
+## [prototype-3] - 2026-03-27
+
+### Implemented (Deliverable 4 — Scenario 3: Intelligent Failure Diagnosis)
+
+#### AI Failure Analyzer (`src/failure_analyzer.py`)
+- **Gemini LLM-powered failure analysis**: Sends full failure context (error message, page state, available elements, test steps, expected outcome) to Gemini for root cause analysis.
+- **Three-category classification**: Categorizes failures as `test_design` (wrong steps/selectors), `application_bug` (app not functioning correctly), or `environment` (network/timeout/infra issues).
+- **Structured diagnosis output**: Returns summary, detailed explanation, actionable suggestion, and proposed fix for each failure.
+- **Rule-based fallback**: When Gemini is unavailable, uses pattern matching on error messages to classify failures and provide sensible recommendations.
+
+#### Actionable Diagnosis UI (`src/templates/test_results.html`)
+- **Category badges**: Color-coded failure type indicators (yellow = test design, red = app bug, blue = environment).
+- **"Apply Suggested Fix" button**: One-click applies AI-proposed test step improvements, resets test status to "Not Run".
+- **"Edit Test Manually" button**: Opens test editor for manual adjustments.
+- **"Re-run / Retry Test" button**: Re-executes test after application or environment fix.
+- **Proposed fix display**: Shows improved test steps (for test design issues) or application fix description (for app bugs) in a styled code block.
+
+#### Settings & Configuration (`/settings`)
+- **Report email**: Users configure their email address for test failure notifications.
+- **Saved applications**: Store target applications with their authentication credentials (username/password or API token). Credentials are stored separately from tests and injected automatically during execution.
+- **Settings database tables**: New `settings` (key-value) and `saved_apps` (name, URL, auth_type, credentials) tables in SQLite.
+
+#### Test Management Improvements
+- **Edit test page** (`/edit-test/<id>`): View and modify test name, URL, steps, and expected outcome.
+- **Clickable test names**: Test names in the list are links that navigate to the edit/details page.
+- **Run All Tests** (`/run-all-tests`): Execute all saved tests sequentially with a summary of results.
+- **Saved app dropdown**: Test creation form shows a dropdown of saved applications for quick URL selection.
+- **Apply fix route** (`/apply-fix/<id>`): Applies AI-suggested test improvements and resets status.
+
+### Changed
+- **Test runner** (`src/test_runner.py`): Integrated `failure_analyzer.py` for structured diagnosis instead of plain-text error messages. All failure paths now return categorized diagnosis dicts.
+- **Database** (`src/db.py`): Added `settings`, `saved_apps` tables. Diagnosis field now stores JSON (backward-compatible with legacy plain text). Added helpers: `get/set_setting`, `insert/get/update/delete_saved_app`, `update_test`.
+- **App routes** (`src/app.py`): Added `/settings`, `/edit-test`, `/apply-fix`, `/run-all-tests` routes. Updated imports for new DB functions.
+- **Navigation**: All templates now include Settings link in navbar.
+- **Simulation mode**: `_simulate_execution()` now returns structured diagnosis dicts matching the Scenario 3 format.
+
 ## [prototype-2] - 2026-03-13
 
 ### Implemented (Deliverable 3 — Scenario 2: Test Execution and Monitoring)

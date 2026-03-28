@@ -125,6 +125,30 @@ def init_db() -> None:
         )
         """
     )
+    # Settings: user preferences (email, notifications).
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            key TEXT NOT NULL UNIQUE,
+            value TEXT NOT NULL
+        )
+        """
+    )
+    # Saved applications: store target app credentials separately from tests.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS saved_apps (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            url TEXT NOT NULL,
+            auth_type TEXT NOT NULL DEFAULT 'none',
+            username TEXT,
+            password TEXT,
+            api_token TEXT
+        )
+        """
+    )
     # Scenario 2: stores execution results when a test is run.
     conn.execute(
         """
@@ -157,9 +181,100 @@ def reset_db() -> None:
     conn.execute("DROP TABLE IF EXISTS test_runs")
     conn.execute("DROP TABLE IF EXISTS test_scenarios")
     conn.execute("DROP TABLE IF EXISTS users")
+    conn.execute("DROP TABLE IF EXISTS settings")
+    conn.execute("DROP TABLE IF EXISTS saved_apps")
     conn.commit()
     conn.close()
     init_db()
+
+
+# --- Settings helpers ---
+
+def get_setting(key: str, default: str = "") -> str:
+    """Get a setting value by key."""
+    conn = get_connection()
+    row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    conn.close()
+    return row["value"] if row else default
+
+
+def set_setting(key: str, value: str) -> None:
+    """Set a setting value (insert or update)."""
+    conn = get_connection()
+    conn.execute(
+        "INSERT INTO settings (key, value) VALUES (?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (key, value),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_all_settings() -> dict:
+    """Return all settings as a dict."""
+    conn = get_connection()
+    rows = conn.execute("SELECT key, value FROM settings").fetchall()
+    conn.close()
+    return {row["key"]: row["value"] for row in rows}
+
+
+# --- Saved apps helpers ---
+
+def insert_saved_app(name: str, url: str, auth_type: str,
+                     username: str = "", password: str = "", api_token: str = "") -> int:
+    """Save a target application with its credentials."""
+    conn = get_connection()
+    cursor = conn.execute(
+        """
+        INSERT INTO saved_apps (name, url, auth_type, username, password, api_token)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (name, url, auth_type, username, password, api_token),
+    )
+    conn.commit()
+    row_id = cursor.lastrowid
+    conn.close()
+    return row_id
+
+
+def get_all_saved_apps() -> list[dict]:
+    """Return all saved applications."""
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM saved_apps ORDER BY id").fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def get_saved_app(app_id: int) -> dict | None:
+    """Return a single saved app by id."""
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM saved_apps WHERE id = ?", (app_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_saved_app(app_id: int, name: str, url: str, auth_type: str,
+                     username: str = "", password: str = "", api_token: str = "") -> None:
+    """Update an existing saved app."""
+    conn = get_connection()
+    conn.execute(
+        """
+        UPDATE saved_apps
+        SET name = ?, url = ?, auth_type = ?, username = ?, password = ?, api_token = ?
+        WHERE id = ?
+        """,
+        (name, url, auth_type, username, password, api_token, app_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_saved_app(app_id: int) -> None:
+    """Delete a saved app."""
+    conn = get_connection()
+    conn.execute("DELETE FROM saved_apps WHERE id = ?", (app_id,))
+    conn.commit()
+    conn.close()
 
 
 def insert_test(name: str, application_url: str, steps_raw: str, expected_outcome: str) -> int:
@@ -216,6 +331,21 @@ def update_test_status(test_id: int, status: str) -> None:
     conn.close()
 
 
+def update_test(test_id: int, name: str, application_url: str, steps_raw: str, expected_outcome: str) -> None:
+    """Update an existing test scenario's details."""
+    conn = get_connection()
+    conn.execute(
+        """
+        UPDATE test_scenarios
+        SET name = ?, application_url = ?, steps_raw = ?, expected_outcome = ?
+        WHERE id = ?
+        """,
+        (name, application_url, steps_raw.strip(), expected_outcome.strip(), test_id),
+    )
+    conn.commit()
+    conn.close()
+
+
 def insert_test_run(test_id: int, status: str, execution_time: float,
                     failure_message: str | None = None,
                     diagnosis: str | None = None,
@@ -235,6 +365,12 @@ def insert_test_run(test_id: int, status: str, execution_time: float,
         performance    — dict of page load times per step (Scenario 2A).
         email_sent     — whether a failure notification email was sent (Scenario 2B).
     """
+    # Serialize diagnosis: accepts both string (legacy) and dict (Scenario 3)
+    if isinstance(diagnosis, dict):
+        diagnosis_json = json.dumps(diagnosis)
+    else:
+        diagnosis_json = diagnosis
+
     conn = get_connection()
     cursor = conn.execute(
         """
@@ -245,7 +381,7 @@ def insert_test_run(test_id: int, status: str, execution_time: float,
         """,
         (
             test_id, status, execution_time,
-            failure_message, diagnosis,
+            failure_message, diagnosis_json,
             json.dumps(screenshots or []),
             json.dumps(performance or {}),
             1 if email_sent else 0,
@@ -256,6 +392,26 @@ def insert_test_run(test_id: int, status: str, execution_time: float,
     row_id = cursor.lastrowid
     conn.close()
     return row_id
+
+
+def _parse_diagnosis(raw):
+    """Parse diagnosis field: returns a dict if JSON, or wraps plain string."""
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            return parsed
+    except (json.JSONDecodeError, TypeError):
+        pass
+    # Legacy plain-text diagnosis — wrap it
+    return {
+        "category": "environment",
+        "summary": raw[:200],
+        "explanation": raw,
+        "suggestion": "",
+        "proposed_fix": "",
+    }
 
 
 def get_test_run(run_id: int) -> dict | None:
@@ -270,6 +426,7 @@ def get_test_run(run_id: int) -> dict | None:
         result = dict(row)
         result["screenshots"] = json.loads(result["screenshots"])
         result["performance"] = json.loads(result["performance"])
+        result["diagnosis"] = _parse_diagnosis(result["diagnosis"])
         return result
     return None
 
@@ -289,5 +446,6 @@ def get_latest_test_run(test_id: int) -> dict | None:
         result = dict(row)
         result["screenshots"] = json.loads(result["screenshots"])
         result["performance"] = json.loads(result["performance"])
+        result["diagnosis"] = _parse_diagnosis(result["diagnosis"])
         return result
     return None

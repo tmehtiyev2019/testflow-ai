@@ -27,6 +27,7 @@ from selenium.common.exceptions import (
 )
 
 from src.llm_step_parser import parse_steps_with_llm
+from src.failure_analyzer import analyze_failure
 
 # Directory where real screenshots are saved
 SCREENSHOT_DIR = os.path.join(os.path.dirname(__file__), "static", "screenshots")
@@ -446,7 +447,8 @@ def execute_test(application_url, steps_raw, expected_outcome):
                 failure_screenshot = _take_screenshot(driver, run_id, f"{global_step}_failure")
                 screenshots.append(failure_screenshot)
                 failure_message = f"{str(e)} at step {global_step}"
-                diagnosis = _generate_diagnosis(driver, str(action), str(e))
+                diagnosis = _generate_diagnosis(driver, str(action), str(e),
+                                                steps_raw, expected_outcome, application_url)
                 status = "Failed"
                 step_results.append({"step": global_step, "text": str(action),
                                      "status": "failed", "message": str(e)})
@@ -483,7 +485,8 @@ def execute_test(application_url, steps_raw, expected_outcome):
                         f"Current page: {driver.title}"
                     )
                     diagnosis = _generate_diagnosis(
-                        driver, f"Verify: {expected_outcome}", failure_message
+                        driver, f"Verify: {expected_outcome}", failure_message,
+                        steps_raw, expected_outcome, application_url
                     )
                     screenshots.append(
                         _take_screenshot(driver, run_id, "final_failure")
@@ -492,11 +495,24 @@ def execute_test(application_url, steps_raw, expected_outcome):
     except WebDriverException as e:
         status = "Failed"
         failure_message = f"Browser error: {str(e)}"
-        diagnosis = f"The target application at {application_url} may be unreachable or returned an error."
+        diagnosis = {
+            "category": "environment",
+            "summary": "The target application is unreachable or the browser encountered an error.",
+            "explanation": f"Browser error: {str(e)}. The target application at {application_url} "
+                           "may be down, the URL may be incorrect, or the browser failed to start.",
+            "suggestion": "Verify the target application is running and the URL is correct.",
+            "proposed_fix": "Check that the application server is running and accessible.",
+        }
     except Exception as e:
         status = "Failed"
         failure_message = f"Execution error: {str(e)}"
-        diagnosis = f"An error occurred during test execution: {str(e)}"
+        diagnosis = {
+            "category": "environment",
+            "summary": f"An unexpected error occurred during test execution.",
+            "explanation": f"Error: {str(e)}",
+            "suggestion": "Review the error details and try running the test again.",
+            "proposed_fix": "",
+        }
 
     finally:
         execution_time = round(time.time() - start_time, 2)
@@ -514,44 +530,37 @@ def execute_test(application_url, steps_raw, expected_outcome):
     }
 
 
-def _generate_diagnosis(driver, step_text, error_msg):
-    """Generate a diagnostic message based on the failure context.
+def _generate_diagnosis(driver, step_text, error_msg, steps_raw="", expected_outcome="", app_url=""):
+    """Generate a structured diagnosis using the AI failure analyzer.
 
-    Analyzes the current page state to provide actionable suggestions.
+    Returns a JSON-serializable dict with category, explanation, and proposed fix.
+    Falls back to a simple dict if analysis fails.
     """
     try:
         soup = BeautifulSoup(driver.page_source, "html.parser")
         title = soup.title.string if soup.title else "Unknown"
-        # Check for common error indicators
         error_indicators = soup.find_all(
             class_=re.compile(r"error|alert|warning|danger", re.I)
         )
         page_errors = [el.get_text(strip=True)[:100] for el in error_indicators[:3]]
+        available = _discover_elements(driver)
 
-        parts = [f"Step failed: '{step_text}'"]
-        parts.append(f"Error: {error_msg}")
-        parts.append(f"Current page: {title}")
-
-        if page_errors:
-            parts.append(f"Page errors detected: {'; '.join(page_errors)}")
-
-        # Suggest possible causes
-        if "not find" in error_msg.lower():
-            available = _discover_elements(driver)
-            btn_texts = [b["text"] for b in available["buttons"] if b["text"]]
-            input_names = [i["name"] or i["id"] for i in available["inputs"] if i["name"] or i["id"]]
-            if btn_texts:
-                parts.append(f"Available buttons: {', '.join(btn_texts[:5])}")
-            if input_names:
-                parts.append(f"Available inputs: {', '.join(input_names[:5])}")
-            parts.append("Suggestion: Check that the element name in the test step matches "
-                         "the actual UI element on the target application.")
-
-        if "timeout" in error_msg.lower():
-            parts.append("Suggestion: The page may be slow to load or the element "
-                         "may not exist. Check the application URL and network connectivity.")
-
-        return " | ".join(parts)
+        return analyze_failure(
+            error_message=error_msg,
+            step_text=step_text,
+            page_title=title,
+            page_errors=page_errors,
+            available_elements=available,
+            test_steps=steps_raw,
+            expected_outcome=expected_outcome,
+            page_url=app_url,
+        )
 
     except Exception:
-        return f"Failed at step: '{step_text}'. Error: {error_msg}"
+        return {
+            "category": "environment",
+            "summary": f"Failed at step: '{step_text}'",
+            "explanation": f"Error: {error_msg}",
+            "suggestion": "Review the error details and check both the test and application.",
+            "proposed_fix": "",
+        }

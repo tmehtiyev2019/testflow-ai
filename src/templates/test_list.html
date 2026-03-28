@@ -12,6 +12,7 @@
     <a href="/tests" class="active">Tests</a>
     <a href="/create-test">Create</a>
     <a href="/discover">Discover</a>
+    <a href="/settings">Settings</a>
   </div>
 </nav>
 {% endblock %}
@@ -32,6 +33,11 @@
       <p>{{ tests|length }} test{{ 's' if tests|length != 1 }} total</p>
     </div>
     <a href="/discover" class="btn btn-secondary" style="margin-right: 8px;">AI Discover</a>
+    {% if tests %}
+    <form method="POST" action="/run-all-tests" style="display:inline; margin-right: 8px;" onsubmit="handleRunAll(this)">
+      <button type="submit" class="btn btn-secondary">Run All</button>
+    </form>
+    {% endif %}
     <a href="/create-test" class="btn btn-primary">+ New Test</a>
   </div>
 
@@ -52,7 +58,7 @@
       {% for test in tests %}
       <tr>
         <td style="color: var(--text-muted);">{{ loop.index }}</td>
-        <td class="test-name" style="font-weight: 600;">{{ test.name }}</td>
+        <td class="test-name" style="font-weight: 600;"><a href="/edit-test/{{ test.id }}" style="color: var(--primary-light); text-decoration: none;">{{ test.name }}</a></td>
         <td style="color: var(--text-muted); font-size: 0.85rem;">{{ test.application_url }}</td>
         <td class="test-status">
           <span class="status-badge {% if test.status == 'Not Run' %}status-not-run{% elif test.status == 'Passed' %}status-passed{% else %}status-failed{% endif %}">
@@ -60,13 +66,11 @@
           </span>
         </td>
         <td>
-          <!-- Scenario 2: "Run Test" button triggers test execution -->
           <form method="POST" action="/run-test/{{ test.id }}" style="display:inline;" onsubmit="handleRunTest(this)">
             <button type="submit" class="btn btn-primary run-test-btn" style="padding: 6px 14px; font-size: 0.8rem;">
-              Run Test
+              Run
             </button>
           </form>
-          <!-- Scenario 2: link to view results if test has been executed -->
           {% if test.status != 'Not Run' %}
           <a href="/test-results/{{ test.id }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; margin-left: 4px;">
             Results
@@ -176,6 +180,25 @@
 </style>
 
 <script>
+function handleRunAll(form) {
+  var overlay = document.getElementById('loading-overlay');
+  overlay.style.display = 'flex';
+  overlay.querySelector('h2').textContent = 'Running All Tests...';
+  overlay.querySelector('.loading-status').textContent = 'Executing all test scenarios sequentially';
+
+  var elapsed = document.getElementById('elapsed');
+  var seconds = 0;
+  var steps = document.querySelectorAll('.loading-step');
+  setInterval(function() {
+    seconds++;
+    elapsed.textContent = seconds;
+    if (seconds >= 2 && steps.length > 0) { steps[0].classList.remove('active'); steps[0].classList.add('done'); steps[1].classList.add('active'); }
+    if (seconds >= 5 && steps.length > 1) { steps[1].classList.remove('active'); steps[1].classList.add('done'); steps[2].classList.add('active'); }
+    if (seconds >= 10 && steps.length > 2) { steps[2].classList.remove('active'); steps[2].classList.add('done'); steps[3].classList.add('active'); }
+    if (seconds >= 15 && steps.length > 3) { steps[3].classList.remove('active'); steps[3].classList.add('done'); steps[4].classList.add('active'); }
+  }, 1000);
+}
+
 function handleRunTest(form) {
   var overlay = document.getElementById('loading-overlay');
   overlay.style.display = 'flex';

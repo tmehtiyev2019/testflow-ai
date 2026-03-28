@@ -11,6 +11,8 @@
   <div class="nav-links">
     <a href="/tests">Tests</a>
     <a href="/create-test" class="active">Create</a>
+    <a href="/discover">Discover</a>
+    <a href="/settings">Settings</a>
   </div>
 </nav>
 {% endblock %}
@@ -93,6 +95,16 @@
 
     <div class="form-group">
       <label for="application_url">Application URL</label>
+      {% if saved_apps %}
+      <div class="saved-app-picker">
+        <select id="saved_app_select" onchange="applySavedApp(this.value)" style="width: 100%; padding: 10px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.9rem; font-family: inherit; margin-bottom: 8px;">
+          <option value="">-- Select a saved application or type URL below --</option>
+          {% for app in saved_apps %}
+          <option value="{{ app.url }}">{{ app.name }} ({{ app.url }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
       <input type="text" id="application_url" name="application_url" placeholder="e.g. https://myapp.com" required>
     </div>
 
@@ -167,6 +179,12 @@ const templates = {
     outcome: "All API endpoints respond correctly with expected status codes and response times within acceptable limits"
   }
 };
+
+function applySavedApp(url) {
+  if (url) {
+    document.getElementById('application_url').value = url;
+  }
+}
 
 function applyTemplate(key) {
   const t = templates[key];

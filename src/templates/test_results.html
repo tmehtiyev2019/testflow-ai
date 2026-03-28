@@ -11,6 +11,8 @@
   <div class="nav-links">
     <a href="/tests">Tests</a>
     <a href="/create-test">Create</a>
+    <a href="/discover">Discover</a>
+    <a href="/settings">Settings</a>
   </div>
 </nav>
 {% endblock %}
@@ -60,12 +62,73 @@
       <p class="failure-text">{{ run.failure_message }}</p>
     </div>
 
-    <!-- Scenario 2B: AI diagnosis (step: "AI-powered diagnosis suggesting") -->
+    <!-- Scenario 3: Structured AI diagnosis -->
     {% if run.diagnosis %}
     <div class="diagnosis-section">
-      <span class="result-label">AI Diagnosis</span>
-      <p class="diagnosis-text">{{ run.diagnosis }}</p>
+      <div class="diagnosis-header">
+        <span class="result-label">AI Diagnosis</span>
+        {% if run.diagnosis.category == 'test_design' %}
+        <span class="category-badge category-test-design">Test Design Issue</span>
+        {% elif run.diagnosis.category == 'application_bug' %}
+        <span class="category-badge category-app-bug">Application Bug</span>
+        {% else %}
+        <span class="category-badge category-environment">Environment Issue</span>
+        {% endif %}
+      </div>
+      <p class="diagnosis-summary">{{ run.diagnosis.summary }}</p>
+      <p class="diagnosis-text">{{ run.diagnosis.explanation }}</p>
     </div>
+
+    {% if run.diagnosis.suggestion %}
+    <div class="suggestion-section">
+      <span class="result-label">Recommendation</span>
+      <p class="suggestion-text">{{ run.diagnosis.suggestion }}</p>
+    </div>
+    {% endif %}
+
+    {% if run.diagnosis.proposed_fix %}
+    <div class="proposed-fix-section {% if run.diagnosis.category == 'test_design' %}fix-test{% else %}fix-app{% endif %}">
+      <span class="result-label">
+        {% if run.diagnosis.category == 'test_design' %}
+        Proposed Test Improvement
+        {% elif run.diagnosis.category == 'application_bug' %}
+        Application Fix Needed
+        {% else %}
+        What to Check
+        {% endif %}
+      </span>
+      <pre class="proposed-fix-text">{{ run.diagnosis.proposed_fix }}</pre>
+    </div>
+    {% endif %}
+
+    <!-- Actionable buttons based on diagnosis -->
+    <div class="action-buttons">
+      {% if run.diagnosis.category == 'test_design' and run.diagnosis.proposed_fix %}
+      <form method="POST" action="/apply-fix/{{ test.id }}" style="display: inline;">
+        <input type="hidden" name="proposed_steps" value="{{ run.diagnosis.proposed_fix }}">
+        <button type="submit" class="btn btn-action btn-fix">
+          Apply Suggested Fix
+        </button>
+      </form>
+      <a href="/edit-test/{{ test.id }}" class="btn btn-action btn-edit">
+        Edit Test Manually
+      </a>
+      {% elif run.diagnosis.category == 'application_bug' %}
+      <form method="POST" action="/run-test/{{ test.id }}" style="display: inline;">
+        <button type="submit" class="btn btn-action btn-rerun">
+          Re-run Test
+        </button>
+      </form>
+      {% elif run.diagnosis.category == 'environment' %}
+      <form method="POST" action="/run-test/{{ test.id }}" style="display: inline;">
+        <button type="submit" class="btn btn-action btn-rerun">
+          Retry Test
+        </button>
+      </form>
+      {% endif %}
+      <a href="/tests" class="btn btn-secondary" style="padding: 10px 20px;">Back to Tests</a>
+    </div>
+    {% endif %}
     {% endif %}
 
     <!-- Scenario 2B: email notification (step: "receive an email notification") -->
@@ -177,10 +240,128 @@
     background: rgba(99, 102, 241, 0.08);
     border-color: rgba(99, 102, 241, 0.2);
   }
+  .diagnosis-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .category-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .category-test-design {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--accent-yellow);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
+  .category-app-bug {
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--accent-red);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+  }
+  .category-environment {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary-light);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+  }
+  .diagnosis-summary {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1rem;
+    margin-top: 6px;
+  }
   .diagnosis-text {
     color: var(--primary-light);
     font-weight: 500;
     margin-top: 4px;
+  }
+  .suggestion-section {
+    background: rgba(52, 211, 153, 0.08);
+    border: 1px solid rgba(52, 211, 153, 0.2);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .suggestion-text {
+    color: var(--accent-green);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .proposed-fix-section {
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .proposed-fix-section.fix-test {
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+  }
+  .proposed-fix-section.fix-app {
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+  }
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .btn-action {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s;
+  }
+  .btn-fix {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  }
+  .btn-fix:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  }
+  .btn-edit {
+    background: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-edit:hover {
+    background: #3b4c63;
+  }
+  .btn-rerun {
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    color: white;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  }
+  .btn-rerun:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  }
+  .proposed-fix-text {
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-top: 8px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    border-radius: 8px;
+    font-family: inherit;
   }
   .email-notification {
     background: rgba(251, 191, 36, 0.08);

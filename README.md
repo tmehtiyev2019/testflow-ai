@@ -10,8 +10,10 @@ A SaaS platform that tests applications from the user's perspective without requ
 - **Real Browser Execution**: Selenium + BeautifulSoup execute tests against real target applications
 - **AI-Powered Step Parsing**: Google Gemini LLM translates natural language steps into Selenium commands
 - **Auto-Discovery**: Crawl any web app and auto-generate test scenarios with AI
+- **Intelligent Failure Diagnosis**: AI categorizes failures (test design / application bug / environment) with actionable fix suggestions
+- **Saved Applications & Credentials**: Store target app auth securely — never expose credentials in test steps
 - **Comprehensive Reporting**: Real screenshots, performance metrics, and execution logs
-- **Smart Notifications**: Real-time alerts for test failures with AI-powered diagnosis
+- **Smart Notifications**: Configure report email for test failure alerts
 
 ## Setup
 
@@ -193,6 +195,33 @@ Open `http://localhost:5001` in your browser and login with:
    - Gemini LLM translates steps to Selenium commands
    - Selenium executes each action with real screenshots
 5. View results: status, execution time, real screenshots, performance metrics
+
+### Step 5b: Failure Diagnosis (Scenario 3)
+
+When a test fails, the results page now shows an **AI-powered diagnosis** with:
+
+1. **Failure Category** — color-coded badge:
+   - **Test Design Issue** (yellow) — your test steps are wrong or incomplete
+   - **Application Bug** (red) — the target app has a problem
+   - **Environment Issue** (blue) — network/timeout/infrastructure problem
+2. **Detailed Explanation** — what went wrong and why
+3. **Recommendation** — what to do next
+4. **Proposed Fix** — either improved test steps or application fix description
+5. **Action Buttons**:
+   - **Apply Suggested Fix** — one-click updates test steps with AI suggestion
+   - **Edit Test Manually** — opens the test editor
+   - **Re-run / Retry Test** — re-execute after fixing the issue
+
+### Step 5c: Settings & Saved Applications
+
+1. Click **"Settings"** in the navigation bar
+2. **Report Email** — enter your email to receive test failure notifications
+3. **Saved Applications** — add target apps with their credentials:
+   - Click **"+ Add Application"**
+   - Enter name, URL, and auth type (None / Username & Password / API Token)
+   - Credentials are stored securely and injected during test execution
+   - No need to include auth details in test steps
+4. When creating a test, select a saved app from the dropdown to auto-fill the URL
 
 ### Step 6: Auto-Discover Test Scenarios (AI Discover)
 
@@ -406,8 +435,9 @@ When acceptance tests run (`TESTFLOW_SIMULATE=1`), the real execution engine is 
 - **Scenario 2A**: Run a passing test → see status "Passed", execution time, per-step screenshots, performance metrics
 - **Scenario 2B**: Run a failing test → see status "Failed", error message, failure screenshot, AI diagnosis, email notification
 
-### Scenario 3: Failure Diagnosis (Not yet implemented)
-- **User Story**: As a product manager, I want detailed failure reports
+### Scenario 3: Intelligent Failure Diagnosis (Implemented)
+- **User Story**: As a developer, I want to understand why a test failed immediately so I can fix issues faster
+- **Flow**: Test fails → AI analyzes error, page state, and available elements → Classifies failure as test design issue, application bug, or environment problem → Provides detailed explanation, recommendation, and proposed fix → Actionable buttons: "Apply Suggested Fix" (auto-updates test steps), "Edit Test Manually", or "Re-run Test"
 
 ### Scenario 4: SWAP CHALLENGE - Self-Healing Tests (Not yet implemented)
 - **User Story**: As a development team, I want tests to adapt to UI changes automatically
@@ -418,9 +448,10 @@ When acceptance tests run (`TESTFLOW_SIMULATE=1`), the real execution engine is 
 testflow-ai/
 ├── src/                                 # Source code
 │   ├── __init__.py
-│   ├── app.py                           # Flask application (routes for Scenarios 1 & 2)
-│   ├── db.py                            # SQLite database helpers (users, test_scenarios, test_runs)
+│   ├── app.py                           # Flask application (routes for Scenarios 1, 2 & 3)
+│   ├── db.py                            # SQLite database helpers (users, tests, runs, settings, apps)
 │   ├── test_runner.py                   # Real Selenium execution engine (Scenario 2)
+│   ├── failure_analyzer.py              # AI failure diagnosis engine (Scenario 3)
 │   ├── llm_step_parser.py              # Gemini LLM: natural language → Selenium commands
 │   ├── site_crawler.py                  # Multi-page crawler (BeautifulSoup + Selenium)
 │   ├── scenario_generator.py            # Gemini LLM: auto-generate test scenarios
@@ -429,9 +460,11 @@ testflow-ai/
 │       ├── base.html                    # Base template with dark theme
 │       ├── login.html                   # Login page
 │       ├── register.html                # Registration page
-│       ├── create_test.html             # Test creation form (Scenario 1)
-│       ├── test_list.html               # Test list with Run buttons (Scenarios 1 & 2)
-│       ├── test_results.html            # Execution results page (Scenario 2)
+│       ├── create_test.html             # Test creation form with saved app dropdown
+│       ├── edit_test.html               # Test editing form
+│       ├── test_list.html               # Test list with Run/Run All buttons
+│       ├── test_results.html            # Results page with AI diagnosis & action buttons
+│       ├── settings.html                # Settings: email, saved applications
 │       └── discover.html                # AI auto-discovery page
 ├── acceptance_tests/                    # BDD test suite
 │   ├── test_creation.feature            # Scenario 1 (Gherkin)

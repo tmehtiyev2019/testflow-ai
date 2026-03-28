@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - TestFlow AI{% endblock %}
+
+{% block navbar %}
+<nav>
+  <a href="/" class="nav-brand">
+    <div class="logo">TF</div>
+    TestFlow AI
+  </a>
+  <div class="nav-links">
+    <a href="/tests">Tests</a>
+    <a href="/create-test">Create</a>
+    <a href="/discover">Discover</a>
+    <a href="/settings" class="active">Settings</a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="card card-wide">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="flash {{ 'flash-success' if category == 'success' else 'flash-error' }}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="page-header">
+    <h1>Settings</h1>
+    <p>Configure notifications and saved applications</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Email / Notification Settings -->
+  <h3 class="section-title">Notifications</h3>
+  <form method="post">
+    <input type="hidden" name="action" value="save_settings">
+    <div class="form-group">
+      <label for="report_email">Report Email</label>
+      <input type="email" id="report_email" name="report_email"
+             value="{{ settings.get('report_email', '') }}"
+             placeholder="e.g. team@company.com">
+      <p class="form-hint">Test failure reports and notifications will be sent to this email.</p>
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-bottom: 1rem;">Save Settings</button>
+  </form>
+
+  <div class="divider"></div>
+
+  <!-- Saved Applications -->
+  <div class="header-row" style="margin-bottom: 1rem;">
+    <h3 class="section-title" style="margin: 0;">Saved Applications</h3>
+    <button type="button" class="btn btn-primary" onclick="toggleAddApp()" style="padding: 8px 16px; font-size: 0.85rem;">+ Add Application</button>
+  </div>
+  <p class="form-hint" style="margin-bottom: 1rem;">
+    Save your target applications with their credentials. Auth details are stored securely and injected automatically during test execution — no need to include credentials in test steps.
+  </p>
+
+  <!-- Add new app form (hidden by default) -->
+  <div id="add-app-form" style="display: none;">
+    <div class="app-form-card">
+      <form method="post">
+        <input type="hidden" name="action" value="add_app">
+        <div class="form-row">
+          <div class="form-group" style="flex: 1;">
+            <label for="app_name">Application Name</label>
+            <input type="text" id="app_name" name="app_name" placeholder="e.g. Kanboard" required>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label for="app_url">URL</label>
+            <input type="text" id="app_url" name="app_url" placeholder="e.g. http://localhost:8080" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Authentication Type</label>
+          <div class="auth-type-selector">
+            <label class="auth-option">
+              <input type="radio" name="auth_type" value="none" checked onchange="toggleAuthFields(this.value)">
+              <span>None</span>
+            </label>
+            <label class="auth-option">
+              <input type="radio" name="auth_type" value="credentials" onchange="toggleAuthFields(this.value)">
+              <span>Username & Password</span>
+            </label>
+            <label class="auth-option">
+              <input type="radio" name="auth_type" value="token" onchange="toggleAuthFields(this.value)">
+              <span>API Token</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="credentials-fields" style="display: none;">
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label for="app_username">Username</label>
+              <input type="text" id="app_username" name="app_username" placeholder="e.g. admin">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="app_password">Password</label>
+              <input type="password" id="app_password" name="app_password" placeholder="Enter password">
+            </div>
+          </div>
+        </div>
+
+        <div id="token-fields" style="display: none;">
+          <div class="form-group">
+            <label for="app_token">API Token</label>
+            <input type="text" id="app_token" name="app_token" placeholder="Enter API token">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="toggleAddApp()" style="padding: 8px 16px; font-size: 0.85rem;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Save Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Saved apps list -->
+  {% if saved_apps %}
+  <div class="saved-apps-list">
+    {% for app in saved_apps %}
+    <div class="saved-app-card">
+      <div class="app-info">
+        <div class="app-name">{{ app.name }}</div>
+        <div class="app-url">{{ app.url }}</div>
+        <div class="app-auth">
+          {% if app.auth_type == 'credentials' %}
+          <span class="auth-badge auth-credentials">Username/Password</span>
+          <span class="auth-detail">User: {{ app.username }}</span>
+          {% elif app.auth_type == 'token' %}
+          <span class="auth-badge auth-token">API Token</span>
+          <span class="auth-detail">{{ app.api_token[:8] }}...</span>
+          {% else %}
+          <span class="auth-badge auth-none">No Auth</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="app-actions">
+        <form method="post" style="display: inline;">
+          <input type="hidden" name="action" value="delete_app">
+          <input type="hidden" name="app_id" value="{{ app.id }}">
+          <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; color: var(--accent-red);">Remove</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state" style="padding: 2rem;">
+    <p style="color: var(--text-muted);">No saved applications yet. Add one to auto-fill URLs and inject credentials during tests.</p>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .form-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+  .form-row {
+    display: flex;
+    gap: 1rem;
+  }
+  .app-form-card {
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .auth-type-selector {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .auth-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .auth-option input[type="radio"] {
+    width: auto;
+    accent-color: var(--primary);
+  }
+  .saved-apps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .saved-app-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .app-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .app-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .app-url {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .app-auth {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .auth-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .auth-credentials {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary-light);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+  }
+  .auth-token {
+    background: rgba(52, 211, 153, 0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+  }
+  .auth-none {
+    background: rgba(148, 163, 184, 0.15);
+    color: var(--text-muted);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+  .auth-detail {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+</style>
+
+<script>
+function toggleAddApp() {
+  var form = document.getElementById('add-app-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleAuthFields(type) {
+  document.getElementById('credentials-fields').style.display = type === 'credentials' ? 'block' : 'none';
+  document.getElementById('token-fields').style.display = type === 'token' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

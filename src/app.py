@@ -38,8 +38,11 @@ import json
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 
 from src.db import (init_db, insert_test, get_all_tests, get_test_by_id,
-                    update_test_status, insert_test_run, get_latest_test_run,
-                    create_user, authenticate_user)
+                    update_test_status, update_test, insert_test_run, get_latest_test_run,
+                    create_user, authenticate_user,
+                    get_setting, set_setting, get_all_settings,
+                    insert_saved_app, get_all_saved_apps, get_saved_app,
+                    update_saved_app, delete_saved_app)
 from src.test_runner import execute_test
 from src.site_crawler import crawl_site
 from src.scenario_generator import generate_scenarios
@@ -134,7 +137,8 @@ def create_app() -> Flask:
             flash("Test scenario created successfully", "success")
             return redirect(url_for("test_list"))
 
-        return render_template("create_test.html")
+        saved_apps = get_all_saved_apps()
+        return render_template("create_test.html", saved_apps=saved_apps)
 
     # --- Scenario 1, step: "the test should appear in my test list with status" ---
     # After saving, Selenium is redirected here and checks the table.
@@ -225,6 +229,150 @@ def create_app() -> Flask:
         run = get_latest_test_run(test_id)
         return render_template("test_results.html", test=test, run=run)
 
+    @app.route("/edit-test/<int:test_id>", methods=["GET", "POST"])
+    def edit_test(test_id):
+        """Edit an existing test scenario."""
+        if not session.get("logged_in"):
+            return redirect(url_for("login"))
+
+        test = get_test_by_id(test_id)
+        if not test:
+            flash("Test not found", "error")
+            return redirect(url_for("test_list"))
+
+        if request.method == "POST":
+            name = request.form.get("test_name", "")
+            application_url = request.form.get("application_url", "")
+            steps_raw = request.form.get("steps_raw", "")
+            expected_outcome = request.form.get("expected_outcome", "")
+
+            update_test(test_id, name, application_url, steps_raw, expected_outcome)
+            flash("Test scenario updated successfully", "success")
+            return redirect(url_for("test_list"))
+
+        return render_template("edit_test.html", test=test)
+
+    # --- Settings & Saved Apps ---
+
+    @app.route("/settings", methods=["GET", "POST"])
+    def settings():
+        """Configuration page for email, saved apps, and preferences."""
+        if not session.get("logged_in"):
+            return redirect(url_for("login"))
+
+        if request.method == "POST":
+            action = request.form.get("action", "")
+
+            if action == "save_settings":
+                email = request.form.get("report_email", "").strip()
+                set_setting("report_email", email)
+                flash("Settings saved successfully", "success")
+
+            elif action == "add_app":
+                name = request.form.get("app_name", "").strip()
+                url = request.form.get("app_url", "").strip()
+                auth_type = request.form.get("auth_type", "none")
+                username = request.form.get("app_username", "").strip()
+                password = request.form.get("app_password", "").strip()
+                api_token = request.form.get("app_token", "").strip()
+                if name and url:
+                    insert_saved_app(name, url, auth_type, username, password, api_token)
+                    flash(f"Application '{name}' saved", "success")
+                else:
+                    flash("Name and URL are required", "error")
+
+            elif action == "delete_app":
+                app_id = int(request.form.get("app_id", 0))
+                if app_id:
+                    delete_saved_app(app_id)
+                    flash("Application removed", "success")
+
+            elif action == "update_app":
+                app_id = int(request.form.get("app_id", 0))
+                name = request.form.get("app_name", "").strip()
+                url = request.form.get("app_url", "").strip()
+                auth_type = request.form.get("auth_type", "none")
+                username = request.form.get("app_username", "").strip()
+                password = request.form.get("app_password", "").strip()
+                api_token = request.form.get("app_token", "").strip()
+                if app_id and name and url:
+                    update_saved_app(app_id, name, url, auth_type, username, password, api_token)
+                    flash(f"Application '{name}' updated", "success")
+
+            return redirect(url_for("settings"))
+
+        all_settings = get_all_settings()
+        saved_apps = get_all_saved_apps()
+        return render_template("settings.html", settings=all_settings, saved_apps=saved_apps)
+
+    @app.route("/apply-fix/<int:test_id>", methods=["POST"])
+    def apply_fix(test_id):
+        """Apply AI-proposed test fix — updates the test steps with the suggestion."""
+        if not session.get("logged_in"):
+            return redirect(url_for("login"))
+
+        test = get_test_by_id(test_id)
+        if not test:
+            flash("Test not found", "error")
+            return redirect(url_for("test_list"))
+
+        proposed_steps = request.form.get("proposed_steps", "").strip()
+        if proposed_steps:
+            update_test(test_id, test["name"], test["application_url"],
+                        proposed_steps, test["expected_outcome"])
+            update_test_status(test_id, "Not Run")
+            flash("Test steps updated with AI suggestion. Ready to re-run.", "success")
+        else:
+            flash("No proposed fix available", "error")
+
+        return redirect(url_for("test_list"))
+
+    @app.route("/run-all-tests", methods=["POST"])
+    def run_all_tests():
+        """Run all saved test scenarios sequentially."""
+        if not session.get("logged_in"):
+            return redirect(url_for("login"))
+
+        tests = get_all_tests()
+        if not tests:
+            flash("No tests to run", "error")
+            return redirect(url_for("test_list"))
+
+        passed = 0
+        failed = 0
+        for test in tests:
+            if os.environ.get("TESTFLOW_SIMULATE") == "1":
+                result = _simulate_execution(test)
+            else:
+                try:
+                    result = execute_test(
+                        application_url=test["application_url"],
+                        steps_raw=test["steps_raw"],
+                        expected_outcome=test["expected_outcome"],
+                    )
+                except Exception:
+                    result = _simulate_execution(test)
+
+            insert_test_run(
+                test_id=test["id"],
+                status=result["status"],
+                execution_time=result["execution_time"],
+                failure_message=result["failure_message"],
+                diagnosis=result["diagnosis"],
+                screenshots=result["screenshots"],
+                performance=result["performance"],
+                email_sent=result["email_sent"],
+            )
+            update_test_status(test["id"], result["status"])
+
+            if result["status"] == "Passed":
+                passed += 1
+            else:
+                failed += 1
+
+        flash(f"All tests executed: {passed} passed, {failed} failed", "success" if failed == 0 else "error")
+        return redirect(url_for("test_list"))
+
     def _simulate_execution(test):
         """Smart simulated test execution fallback (Scenario 2).
 
@@ -287,7 +435,19 @@ def create_app() -> Flask:
             status = "Failed"
             failure_step = min(len(step_lines), 7)
             failure_message = f"Payment API timeout at step {failure_step}"
-            diagnosis = "Payment gateway may be down or experiencing high latency"
+            diagnosis = {
+                "category": "application_bug",
+                "summary": "Payment API timeout — the payment gateway is not responding.",
+                "explanation": f"The test failed at step {failure_step} because the payment API "
+                               "did not respond within the expected timeout. This is an application-side "
+                               "issue, not a problem with the test design. The payment gateway may be "
+                               "down or experiencing high latency.",
+                "suggestion": "Investigate the payment gateway status and application server logs.",
+                "proposed_fix": "Check the payment gateway service status. If the gateway is a "
+                                "third-party service, verify its status page. Review application logs "
+                                "for connection timeout errors. Consider increasing the API timeout "
+                                "threshold or adding a retry mechanism in the payment processing code.",
+            }
             email_sent = True
             # Generate failure screenshot
             fail_path = _generate_step_screenshot(
