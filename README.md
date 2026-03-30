@@ -169,27 +169,38 @@ Beyond acceptance tests, TestFlow AI can execute tests against real web applicat
 
 ### Prerequisites
 
-- **Python 3.11+** installed locally
-- **Google Chrome** installed (Selenium uses it in headless mode)
-- **Docker Desktop** installed and running (for the target application)
-- **Google Gemini API key** (for AI-powered step parsing and scenario generation)
+- **Docker Desktop** installed and running
+- **Google Gemini API key** (optional, for AI-powered step parsing and scenario generation)
 
-### Step 1: Install Python Dependencies
+### Step 1: Start TestFlow AI (Docker)
 
 ```bash
-pip install -r requirements.txt
+docker-compose up webapp
 ```
 
-### Step 2: Configure Gemini API Key
+This builds the Docker image (Python 3.11, Chromium, all dependencies) and starts the Flask app.
 
-Create a config file with your Gemini API key:
+- **TestFlow AI URL**: `http://localhost:5001`
+- **Login**: `test@example.com` / `password123`
 
+To stop: `Ctrl+C` or `docker-compose down`
+
+**Alternative: Local Python (without Docker)**
 ```bash
-mkdir -p .claude
-echo "gemini_token='YOUR_GEMINI_API_KEY'" > .claude/.config
+pip install -r requirements.txt
+python3 -c "from src.app import create_app; app = create_app(); app.run(port=5001)"
+```
+
+### Step 2: Configure Gemini API Key (Optional)
+
+Create a `.env` file in the project root:
+```bash
+echo "GEMINI_API_KEY=YOUR_KEY" > .env
 ```
 
 You can get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
+
+Without a key, the app still works — failure diagnosis uses rule-based fallback instead of LLM.
 
 ### Step 3: Deploy a Target Application (Kanboard)
 
@@ -209,17 +220,7 @@ Kanboard will be available at `http://localhost:8080` with default credentials:
 - **Username**: `admin`
 - **Password**: `admin`
 
-### Step 4: Start TestFlow AI
-
-```bash
-python3 -c "from src.app import create_app; app = create_app(); app.run(port=5001)"
-```
-
-Open `http://localhost:5001` in your browser and login with:
-- **Email**: `test@example.com`
-- **Password**: `password123`
-
-### Step 5: Create and Run a Test (Manual)
+### Step 4: Create and Run a Test (Manual)
 
 1. Click **"+ New Test"**
 2. Fill in:
@@ -241,7 +242,7 @@ Open `http://localhost:5001` in your browser and login with:
    - Selenium executes each action with real screenshots
 5. View results: status, execution time, real screenshots, performance metrics
 
-### Step 5b: Failure Diagnosis (Scenario 3)
+### Step 4b: Failure Diagnosis (Scenario 3)
 
 When a test fails, the results page now shows an **AI-powered diagnosis** with:
 
@@ -257,7 +258,7 @@ When a test fails, the results page now shows an **AI-powered diagnosis** with:
    - **Edit Test Manually** — opens the test editor
    - **Re-run / Retry Test** — re-execute after fixing the issue
 
-### Step 5c: Settings & Saved Applications
+### Step 4c: Settings & Saved Applications
 
 1. Click **"Settings"** in the navigation bar
 2. **Report Email** — enter your email to receive test failure notifications
@@ -268,7 +269,7 @@ When a test fails, the results page now shows an **AI-powered diagnosis** with:
    - No need to include auth details in test steps
 4. When creating a test, select a saved app from the dropdown to auto-fill the URL
 
-### Step 6: Auto-Discover Test Scenarios (AI Discover)
+### Step 5: Auto-Discover Test Scenarios (AI Discover)
 
 Instead of writing tests manually, let AI generate them:
 
@@ -555,16 +556,15 @@ docker run -d -p 8080:80 --name kanboard kanboard/kanboard
 
 ### Step 2: Configure and Start TestFlow AI
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Optional: add Gemini API key for AI features
+echo "GEMINI_API_KEY=YOUR_KEY" > .env
 
-# Configure Gemini API key
-mkdir -p .claude
-echo "gemini_token='YOUR_GEMINI_API_KEY'" > .claude/.config
-
-# Start the application
-python3 -c "from src.app import create_app; app = create_app(); app.run(port=5001)"
+# Start the app (Docker — no pip install needed)
+docker-compose up webapp
 ```
+- **TestFlow AI URL**: `http://localhost:5001`
+- **Login**: `test@example.com` / `password123`
+
 - **TestFlow AI URL**: `http://localhost:5001`
 - **Login**: `test@example.com` / `password123`
 

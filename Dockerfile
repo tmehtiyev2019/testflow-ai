@@ -34,8 +34,8 @@ COPY . .
 # Create directory for test reports
 RUN mkdir -p reports screenshots
 
-# Expose port (for future web UI)
-EXPOSE 8000
+# Expose port for web UI
+EXPOSE 5001
 
 # Default command: run Behave tests
 CMD ["behave", "acceptance_tests/", "--no-capture"]

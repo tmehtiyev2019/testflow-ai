@@ -1,37 +1,35 @@
 services:
+  # TestFlow AI - Web Application (Interactive Mode)
+  # Usage: docker-compose up webapp
+  # Then open http://localhost:5001 in your browser
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: testflow-ai-webapp
+    volumes:
+      - .:/app
+      - ./screenshots:/app/src/static/screenshots
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    ports:
+      - "5001:5001"
+    command: python -c "from src.app import create_app; app = create_app(); app.run(host='0.0.0.0', port=5001)"
+
   # TestFlow AI - Acceptance Tests
+  # Usage: docker-compose run --rm testflow behave acceptance_tests/
   testflow:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: testflow-ai-tests
     volumes:
-      # Mount project directory for live code updates
       - .:/app
-      # Persist test reports
       - ./reports:/app/reports
       - ./screenshots:/app/screenshots
     environment:
       - PYTHONUNBUFFERED=1
-    # Override default command for interactive development
-    # Use: docker-compose run testflow behave acceptance_tests/
     stdin_open: true
     tty: true
-    command: tail -f /dev/null  # Keep container running for development
-
-  # Optional: Database service for future use
-  # Uncomment when implementing the application
-  # db:
-  #   image: postgres:15-alpine
-  #   container_name: testflow-db
-  #   environment:
-  #     POSTGRES_DB: testflow
-  #     POSTGRES_USER: testflow
-  #     POSTGRES_PASSWORD: testflow_dev
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-
-# volumes:
-#   postgres_data:
+    command: tail -f /dev/null

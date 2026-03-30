@@ -9,17 +9,25 @@ import os
 
 from google import genai
 
-_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", ".claude", ".config")
+_PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
+_ENV_PATH = os.path.join(_PROJECT_ROOT, ".env")
+_CONFIG_PATH = os.path.join(_PROJECT_ROOT, ".claude", ".config")
 
 
 def _load_api_key():
-    try:
-        with open(_CONFIG_PATH) as f:
-            for line in f:
-                if "gemini_token" in line:
-                    return line.split("=", 1)[1].strip().strip("'\"")
-    except FileNotFoundError:
-        pass
+    """Read the Gemini API key from .env, environment variable, or legacy .config."""
+    for path in (_ENV_PATH, _CONFIG_PATH):
+        try:
+            with open(path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("#") or "=" not in line:
+                        continue
+                    key, _, value = line.partition("=")
+                    if key.strip() in ("GEMINI_API_KEY", "gemini_token"):
+                        return value.strip().strip("'\"")
+        except FileNotFoundError:
+            continue
     return os.environ.get("GEMINI_API_KEY", "")
 
 
