@@ -235,6 +235,31 @@ class TestTestRuns:
         run = db.get_test_run(rid)
         assert run["email_sent"] == 0
 
+    def test_insert_test_run_stores_notification_recipient(self, tmp_db):
+        tid = db.insert_test("T", "http://t", "s", "o")
+        rid = db.insert_test_run(
+            tid,
+            "Failed",
+            1.0,
+            notification_triggered=True,
+            notification_recipient="qa@example.com",
+            notification_delivery="simulated",
+        )
+        run = db.get_test_run(rid)
+        assert run["notification_recipient"] == "qa@example.com"
+
+    def test_insert_test_run_stores_notification_reason(self, tmp_db):
+        tid = db.insert_test("T", "http://t", "s", "o")
+        rid = db.insert_test_run(
+            tid,
+            "Failed",
+            1.0,
+            notification_reason="Application bug detected.",
+            notification_error="SMTP unavailable",
+        )
+        run = db.get_test_run(rid)
+        assert run["notification_reason"] == "Application bug detected."
+
     def test_get_test_run_not_found(self, tmp_db):
         assert db.get_test_run(9999) is None
 
