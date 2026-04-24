@@ -1,5 +1,24 @@
 # Changelog
 
+## [prototype-4] - 2026-04-19
+
+### Implemented (Deliverable 5 — Scenario 4: Report Email Smart Notifications)
+
+#### Scenario 4 Acceptance Flow
+- Replaced the previous Scenario 4 stub with an implemented **Report Email Smart Notifications** acceptance scenario.
+- The scenario logs in, saves a Report Email in Settings, runs a critical payment failure, verifies the Smart Notification recipient/reason/delivery on the results page, and confirms notification metadata is stored in SQLite.
+- Added Selenium step definitions in `acceptance_tests/steps/ai_capabilities_steps.py`; all previous `NotImplementedError` stubs were removed.
+- Updated `acceptance_tests/environment.py` to use an acceptance-only temporary SQLite database for Behave runs, preventing stale local `testflow.db` schemas from causing missing-table errors.
+
+#### Smart Notification Test Coverage
+- Added unit tests for `src/notifications.py`, including passed-run suppression, application-bug triggering, noncritical suppression, urgent timeout matching, SMTP success, and SMTP failure fallback.
+- Added integration tests for Scenario 4 covering Report Email persistence, configured-recipient notification delivery, fallback to the logged-in user when no Report Email is set, and suppressed noncritical failures.
+- Added database coverage for persisted notification recipient and reason fields on `test_runs`.
+
+#### Documentation & Environment
+- Updated `README.md` with clear Scenario 4 acceptance-test instructions, Scenario 4 unit/integration test commands, updated all-scenarios acceptance command, and coverage requirements.
+- Documented Scenario 4 environment requirements: Docker/Chromium is enough for acceptance tests; real SMTP delivery is optional and controlled by `TESTFLOW_SMTP_*` variables.
+
 ## [prototype-3] - 2026-03-27
 
 ### Implemented (Deliverable 4 — Scenario 3: Intelligent Failure Diagnosis)

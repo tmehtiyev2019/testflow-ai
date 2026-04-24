@@ -7,6 +7,7 @@ Starts a real Flask server and headless Chromium browser for Scenario 1.
 """
 
 import os
+import tempfile
 import threading
 import time
 
@@ -15,7 +16,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
 from src.app import create_app
-from src.db import reset_db
+from src import db as db_module
 
 # Flask server settings
 FLASK_HOST = "127.0.0.1"
@@ -30,6 +31,16 @@ def before_all(context):
 
     # Force simulation mode for acceptance tests so results are deterministic.
     os.environ["TESTFLOW_SIMULATE"] = "1"
+
+    # Use an acceptance-only database so stale local app data cannot leak into
+    # Behave runs. The Flask server thread and step definitions share this
+    # module-level path inside the same Python process.
+    context.acceptance_db_path = os.path.join(
+        tempfile.gettempdir(),
+        f"testflow_acceptance_{os.getpid()}.db",
+    )
+    db_module.DB_PATH = context.acceptance_db_path
+    db_module.reset_db()
 
     # --- Start Flask in a background thread ---
     app = create_app()
@@ -70,7 +81,8 @@ def before_feature(context, feature):
 def before_scenario(context, scenario):
     print(f"\nStarting Scenario: {scenario.name}")
     # Clean database before each scenario.
-    reset_db()
+    db_module.DB_PATH = context.acceptance_db_path
+    db_module.reset_db()
     # Shared scratch space for step definitions.
     context.test_state = {}
 
@@ -94,4 +106,6 @@ def after_all(context):
     if hasattr(context, "driver"):
         context.driver.quit()
         print("Selenium driver closed")
+    if hasattr(context, "acceptance_db_path") and os.path.exists(context.acceptance_db_path):
+        os.remove(context.acceptance_db_path)
     print("\n=== Test Execution Complete ===")

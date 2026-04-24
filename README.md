@@ -144,24 +144,48 @@ Feature: Intelligent Failure Diagnosis
 25 steps passed, 0 failed, 0 skipped
 ```
 
-### Run All Implemented Acceptance Tests (Scenarios 1, 2 & 3)
+### Run Scenario 4 (Report Email Smart Notifications)
 ```bash
-docker-compose run --rm testflow behave acceptance_tests/test_creation.feature acceptance_tests/test_execution.feature acceptance_tests/failure_diagnosis.feature
+docker-compose run --rm testflow behave acceptance_tests/ai_capabilities.feature
 ```
 
 Expected output:
 ```
-3 features passed, 0 failed, 0 skipped
-6 scenarios passed, 0 failed, 0 skipped
-51 steps passed, 0 failed, 0 skipped
+Feature: Smart Notifications with Report Email
+  Scenario: Report email receives a smart notification for a critical failure
+    Given I am logged into the platform for smart notifications                                             # PASSED
+    And I save report email "qa-alerts@example.com"                                                        # PASSED
+    And I have a critical failing notification test "Payment Processing Alert" with expected outcome ...    # PASSED
+    When I run the critical failing notification test                                                       # PASSED
+    Then I should see test status as "Failed"                                                              # PASSED
+    And I should see a smart notification sent to "qa-alerts@example.com"                                  # PASSED
+    And I should see smart notification reason "Application bug detected in a monitored workflow."          # PASSED
+    And I should see smart notification delivery "Logged as a simulated alert because SMTP delivery failed" # PASSED
+    And the notification should be stored with recipient "qa-alerts@example.com"                           # PASSED
+
+1 feature passed, 0 failed, 0 skipped
+1 scenario passed, 0 failed, 0 skipped
+9 steps passed, 0 failed, 0 skipped
+```
+
+Scenario 4 does not require live SMTP credentials for acceptance testing. With no `TESTFLOW_SMTP_HOST` configured, TestFlow records a deterministic simulated delivery while still verifying the saved Report Email recipient.
+
+### Run All Implemented Acceptance Tests (Scenarios 1, 2, 3 & 4)
+```bash
+docker-compose run --rm testflow behave acceptance_tests/test_creation.feature acceptance_tests/test_execution.feature acceptance_tests/failure_diagnosis.feature acceptance_tests/ai_capabilities.feature
+```
+
+Expected output:
+```
+4 features passed, 0 failed, 0 skipped
+7 scenarios passed, 0 failed, 0 skipped
+60 steps passed, 0 failed, 0 skipped
 ```
 
 ### Run All Acceptance Tests
 ```bash
 docker-compose run --rm testflow behave acceptance_tests/
 ```
-
-Note: Scenario 4 (SWAP Challenge) is not yet implemented and will error with `NotImplementedError`.
 
 ## Running Unit and Integration Tests
 
@@ -175,6 +199,11 @@ pytest tests/unit/
 ### Run Integration Tests
 ```bash
 pytest tests/integration/
+```
+
+### Run Scenario 4 Unit/Integration Tests
+```bash
+pytest tests/unit/test_notifications.py tests/integration/test_scenario4_notifications.py
 ```
 
 ### Run All Tests with Coverage
@@ -228,12 +257,68 @@ python3 -c "from src.app import create_app; app = create_app(); app.run(port=500
 
 Create a `.env` file in the project root:
 ```bash
-echo "GEMINI_API_KEY=YOUR_KEY" > .env
+cat > .env <<'EOF'
+GEMINI_API_KEY=YOUR_KEY
+EOF
 ```
 
 You can get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
 
 Without a key, the app still works — failure diagnosis uses rule-based fallback instead of LLM.
+
+### Step 2b: Configure SMTP for Smart Notifications (Optional)
+
+Smart notifications can send real email alerts through SMTP. If SMTP is not configured, the app will still record and display the notification in the UI as a simulated delivery.
+
+Environment requirements for Scenario 4:
+- Acceptance tests only require Docker/Chromium through the `testflow` service; no Gemini or SMTP credentials are required.
+- Interactive SMTP delivery uses `TESTFLOW_SMTP_HOST`, `TESTFLOW_SMTP_PORT`, `TESTFLOW_SMTP_USERNAME`, `TESTFLOW_SMTP_PASSWORD`, `TESTFLOW_SMTP_FROM`, and `TESTFLOW_SMTP_USE_TLS`.
+- The destination address is saved in the app UI under **Settings → Report Email** and is stored as the `report_email` setting.
+
+Add the SMTP settings to the same `.env` file:
+
+```bash
+cat > .env <<'EOF'
+GEMINI_API_KEY=YOUR_KEY
+TESTFLOW_SMTP_HOST=smtp.gmail.com
+TESTFLOW_SMTP_PORT=587
+TESTFLOW_SMTP_USERNAME=your-email@gmail.com
+TESTFLOW_SMTP_PASSWORD=your-google-app-password
+TESTFLOW_SMTP_FROM=your-email@gmail.com
+TESTFLOW_SMTP_USE_TLS=1
+EOF
+```
+
+Notes:
+- The Docker `webapp` service reads these variables automatically.
+- For Gmail, `TESTFLOW_SMTP_USERNAME` and `TESTFLOW_SMTP_FROM` are usually the same address.
+- `TESTFLOW_SMTP_PASSWORD` must be a **Google App Password**, not your normal Gmail password.
+
+#### Creating a Google App Password
+
+Gmail SMTP will usually reject your normal account password. Use a Google App Password instead:
+
+1. Sign in to the Google account that will send the notifications.
+2. Go to **Google Account → Security**.
+3. Turn on **2-Step Verification** if it is not already enabled.
+4. Open **App passwords**.
+5. Create a new app password for Mail, or create a custom-named password for TestFlow AI.
+6. Copy the generated 16-character password into `TESTFLOW_SMTP_PASSWORD`.
+
+Example:
+
+```env
+TESTFLOW_SMTP_USERNAME=your-email@gmail.com
+TESTFLOW_SMTP_PASSWORD=abcdefghijklmnop
+TESTFLOW_SMTP_FROM=your-email@gmail.com
+```
+
+After updating `.env`, restart the app:
+
+```bash
+docker compose down
+docker compose up --build --force-recreate webapp
+```
 
 ### Step 3: Deploy a Target Application (Kanboard)
 
@@ -294,13 +379,22 @@ When a test fails, the results page now shows an **AI-powered diagnosis** with:
 ### Step 4c: Settings & Saved Applications
 
 1. Click **"Settings"** in the navigation bar
-2. **Report Email** — enter your email to receive test failure notifications
+2. **Report Email** — enter the destination email address that should receive smart notification alerts
 3. **Saved Applications** — add target apps with their credentials:
    - Click **"+ Add Application"**
    - Enter name, URL, and auth type (None / Username & Password / API Token)
    - Credentials are stored securely and injected during test execution
    - No need to include auth details in test steps
 4. When creating a test, select a saved app from the dropdown to auto-fill the URL
+
+To verify SMTP is working:
+
+1. Save a **Report Email** in Settings
+2. Create a test that intentionally fails, for example with an expected outcome containing `payment timeout`
+3. Run the test
+4. On the results page, look for the **Smart Notification** section
+5. If SMTP succeeds, the delivery line will say **"Email sent via SMTP"**
+6. If SMTP fails, the results page will show the SMTP error message to help with debugging
 
 ### Step 5: Auto-Discover Test Scenarios (AI Discover)
 
@@ -504,7 +598,8 @@ When acceptance tests run (`TESTFLOW_SIMULATE=1`), the real execution engine is 
 8. **Scenario 3A**: Application bug failure → category badge "Application Bug", diagnosis summary, explanation, recommendation, proposed fix, "Re-run Test" button
 9. **Scenario 3B**: Test design failure → category badge "Test Design Issue", "Apply Suggested Fix" button → click → test steps updated, status reset to "Not Run"
 10. **Scenario 3C**: Environment failure → category badge "Environment Issue", explanation about unreachable target, "Retry Test" button
-11. After tests complete, the browser and server shut down
+11. **Scenario 4**: Save a Report Email → run a critical payment failure → Smart Notification displays the configured recipient, reason, and deterministic simulated delivery
+12. After tests complete, the browser and server shut down
 
 ## Acceptance Test Scenarios
 
@@ -524,8 +619,10 @@ When acceptance tests run (`TESTFLOW_SIMULATE=1`), the real execution engine is 
 - **Scenario 3B**: Test design issue → "Test Design Issue" badge, "Apply Suggested Fix" button updates test steps, status resets to "Not Run"
 - **Scenario 3C**: Environment issue → "Environment Issue" badge, explanation about unreachable target, "Retry Test" button
 
-### Scenario 4: SWAP CHALLENGE - Self-Healing Tests (Not yet implemented)
-- **User Story**: As a development team, I want tests to adapt to UI changes automatically
+### Scenario 4: Report Email Smart Notifications (Implemented)
+- **User Story**: As a QA lead, I want critical failed workflows to notify my configured report email
+- **Flow**: Login → Settings → Save Report Email → Run a critical failing payment test → Results page shows Smart Notification with recipient, trigger reason, and delivery mode → Notification metadata is stored on the test run
+- **Scenario 4A**: Application bug failure → configured report email appears in Smart Notification → delivery is simulated when SMTP is not configured → database stores the recipient for auditability
 
 ## Project Structure
 
@@ -555,12 +652,12 @@ testflow-ai/
 │   ├── test_creation.feature            # Scenario 1 (Gherkin)
 │   ├── test_execution.feature           # Scenario 2 (Gherkin)
 │   ├── failure_diagnosis.feature        # Scenario 3 (Gherkin) - 3 sub-scenarios
-│   ├── ai_capabilities.feature          # Scenario 4 - SWAP CHALLENGE (Gherkin)
+│   ├── ai_capabilities.feature          # Scenario 4 - Report Email Smart Notifications
 │   ├── steps/                           # Step definitions
 │   │   ├── test_creation_steps.py       # Selenium-based steps for Scenario 1
 │   │   ├── test_execution_steps.py      # Selenium steps for Scenario 2 (17 steps)
 │   │   ├── failure_diagnosis_steps.py   # Selenium steps for Scenario 3 (25 steps)
-│   │   └── ai_capabilities_steps.py     # Stubs for Scenario 4
+│   │   └── ai_capabilities_steps.py     # Selenium steps for Scenario 4 (9 steps)
 │   └── environment.py                   # Flask + Selenium setup/teardown
 ├── Dockerfile
 ├── docker-compose.yml
@@ -646,10 +743,10 @@ docker-compose up webapp
 # Build Docker image
 docker-compose build
 
-# Run all implemented scenarios (1, 2, 3)
-docker-compose run --rm testflow behave acceptance_tests/test_creation.feature acceptance_tests/test_execution.feature acceptance_tests/failure_diagnosis.feature
+# Run all implemented scenarios (1, 2, 3, 4)
+docker-compose run --rm testflow behave acceptance_tests/test_creation.feature acceptance_tests/test_execution.feature acceptance_tests/failure_diagnosis.feature acceptance_tests/ai_capabilities.feature
 
-# Expected: 3 features passed, 6 scenarios passed, 51 steps passed
+# Expected: 4 features passed, 7 scenarios passed, 60 steps passed
 ```
 
 ### Step 8: Cleanup
