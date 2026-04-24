@@ -607,6 +607,15 @@
       </div>
     </div>
     <div class="col">
+      <h3 style="color: #34d399;">Deliverable 5 &check;</h3>
+      <div class="checklist">
+        <div class="check-item"><span class="check-icon check-done">&check;</span> 251 unit tests + 29 integration tests</div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> 73.7% line / 89.7% branch coverage</div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> pytest fixtures + docstring annotations</div>
+        <div class="check-item"><span class="check-icon check-done">&check;</span> 280 / 280 tests passing</div>
+      </div>
+    </div>
+    <div class="col">
       <h3 style="color: #fbbf24;">SWAP Challenge</h3>
       <div class="checklist">
         <div class="check-item"><span class="check-icon check-pending">4</span> Self-healing tests (not yet implemented)</div>
@@ -614,9 +623,9 @@
     </div>
   </div>
   <div class="progress-bar" style="margin-top: 30px;">
-    <div class="progress-fill" style="width: 75%;"></div>
+    <div class="progress-fill" style="width: 85%;"></div>
   </div>
-  <p style="color: #94a3b8; margin-top: 10px;">3 of 4 scenarios implemented (75%) &bull; 6 scenarios &bull; 51 steps passing</p>
+  <p style="color: #94a3b8; margin-top: 10px;">3 of 4 scenarios &bull; 6 BDD scenarios &bull; 51 BDD steps &bull; 280 unit/integration tests passing</p>
 </div>
 
 <!-- SLIDE 13: Implementation Deep Dive -->
@@ -728,8 +737,98 @@
   </div>
 </div>
 
-<!-- SLIDE 17: Thank You -->
+<!-- SLIDE 17: Deliverable 5 - Unit & Integration Tests -->
 <div class="slide" id="slide-17">
+  <h2>Deliverable 5: Unit &amp; Integration Tests</h2>
+  <p style="color: #94a3b8; margin-bottom: 20px;">280 tests &bull; 73.7% line coverage &bull; 89.7% branch coverage &bull; <span style="color: #34d399;">All passing</span></p>
+  <div class="two-col">
+    <div class="col">
+      <h3 style="color: #60a5fa;">Unit Tests &mdash; 251 tests</h3>
+      <div class="item-text" style="line-height: 1.8; font-size: 0.9rem;">
+        <strong>7 modules under <code>tests/unit/</code></strong><br>
+        &nbsp;&nbsp;&bull; <code>test_app.py</code> &mdash; Flask routes<br>
+        &nbsp;&nbsp;&bull; <code>test_db.py</code> &mdash; SQLite CRUD<br>
+        &nbsp;&nbsp;&bull; <code>test_failure_analyzer.py</code><br>
+        &nbsp;&nbsp;&bull; <code>test_llm_step_parser.py</code><br>
+        &nbsp;&nbsp;&bull; <code>test_scenario_generator.py</code><br>
+        &nbsp;&nbsp;&bull; <code>test_site_crawler.py</code><br>
+        &nbsp;&nbsp;&bull; <code>test_test_runner.py</code><br><br>
+        <em style="color: #64748b;">Single assertion per test &bull; Mocked Selenium/Gemini/SMTP</em>
+      </div>
+    </div>
+    <div class="col">
+      <h3 style="color: #a78bfa;">Integration Tests &mdash; 29 tests</h3>
+      <div class="item-text" style="line-height: 1.8; font-size: 0.9rem;">
+        <strong><code>tests/integration/test_workflows.py</code></strong><br>
+        &nbsp;&nbsp;&bull; End-to-end CRUD &rarr; execution<br>
+        &nbsp;&nbsp;&bull; Auth &rarr; create test &rarr; run<br>
+        &nbsp;&nbsp;&bull; Failure &rarr; AI diagnosis &rarr; fix<br>
+        &nbsp;&nbsp;&bull; Settings persistence<br><br>
+        <strong style="color: #34d399;">Tooling</strong><br>
+        &nbsp;&nbsp;&bull; <code>pytest</code> + <code>pytest-cov</code><br>
+        &nbsp;&nbsp;&bull; <code>conftest.py</code> fixtures (DB, Flask client)<br>
+        &nbsp;&nbsp;&bull; <code>.coveragerc</code> with 70% fail-under<br>
+        &nbsp;&nbsp;&bull; <code>@param/@return/@throws</code> docstrings
+      </div>
+    </div>
+  </div>
+  <div class="code-block" style="margin-top: 20px; font-size: 0.8rem;">
+    $ pytest tests/ --cov=src --cov-branch<br>
+    <span class="step">280 passed in 47.05s &bull; line 73.7% &bull; branch 89.7%</span>
+  </div>
+</div>
+
+<!-- SLIDE 18: Demo Cheat Sheet - All Commands -->
+<div class="slide" id="slide-18">
+  <h2>Demo Cheat Sheet &mdash; All Commands</h2>
+  <div class="two-col" style="gap: 24px;">
+    <div class="col">
+      <h3 style="color: #f472b6;">1. Start the App</h3>
+      <div class="code-block" style="font-size: 0.78rem; margin-bottom: 16px;">
+        <span class="comment"># Build + start TestFlow AI on :5001</span><br>
+        $ docker-compose build<br>
+        $ docker-compose up webapp<br><br>
+        <span class="comment"># Target app (Kanboard) on :8080</span><br>
+        $ docker run -d -p 8080:80 \<br>
+        &nbsp;&nbsp;--name kanboard kanboard/kanboard
+      </div>
+      <h3 style="color: #60a5fa;">2. BDD Acceptance Tests</h3>
+      <div class="code-block" style="font-size: 0.78rem;">
+        <span class="comment"># All 3 features (6 scenarios, 51 steps)</span><br>
+        $ docker-compose run --rm testflow behave \<br>
+        &nbsp;&nbsp;acceptance_tests/test_creation.feature \<br>
+        &nbsp;&nbsp;acceptance_tests/test_execution.feature \<br>
+        &nbsp;&nbsp;acceptance_tests/failure_diagnosis.feature
+      </div>
+    </div>
+    <div class="col">
+      <h3 style="color: #a78bfa;">3. Unit &amp; Integration Tests</h3>
+      <div class="code-block" style="font-size: 0.78rem; margin-bottom: 16px;">
+        <span class="comment"># All 280 tests</span><br>
+        $ pytest tests/ -v<br><br>
+        <span class="comment"># Unit tests only (251)</span><br>
+        $ pytest tests/unit/ -v<br><br>
+        <span class="comment"># Integration tests only (29)</span><br>
+        $ pytest tests/integration/ -v
+      </div>
+      <h3 style="color: #34d399;">4. Coverage Report</h3>
+      <div class="code-block" style="font-size: 0.78rem;">
+        <span class="comment"># Terminal report (line + branch)</span><br>
+        $ pytest tests/ --cov=src --cov-branch \<br>
+        &nbsp;&nbsp;--cov-report=term-missing<br><br>
+        <span class="comment"># HTML report &rarr; htmlcov/index.html</span><br>
+        $ pytest tests/ --cov=src --cov-branch \<br>
+        &nbsp;&nbsp;--cov-report=html
+      </div>
+    </div>
+  </div>
+  <p style="color: #94a3b8; margin-top: 18px; font-size: 0.85rem;">
+    <strong style="color: #34d399;">Expected:</strong> 3 features / 6 scenarios / 51 steps passed &bull; 280 pytest passed &bull; 73.7% line / 89.7% branch
+  </p>
+</div>
+
+<!-- SLIDE 19: Thank You -->
+<div class="slide" id="slide-19">
   <h1>Thank You</h1>
   <div class="subtitle">Questions?</div>
   <div style="margin-top: 20px; max-width: 700px;">
@@ -752,11 +851,11 @@
   <button onclick="prev()">&larr; Prev</button>
   <button onclick="next()">Next &rarr;</button>
 </div>
-<div class="slide-counter" id="counter">1 / 17</div>
+<div class="slide-counter" id="counter">1 / 19</div>
 
 <script>
   let current = 1;
-  const total = 17;
+  const total = 19;
 
   function show(n) {
     document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
