@@ -161,7 +161,7 @@ Expected output:
 docker-compose run --rm testflow behave acceptance_tests/
 ```
 
-Note: Scenario 4 (SWAP Challenge) is not yet implemented and will error with `NotImplementedError`.
+Note: This includes Scenario 4 (Report Email Smart Notifications — `ai_capabilities.feature`). Acceptance runs use a temporary SQLite database so stale local schemas don't affect the result.
 
 ## Running Unit and Integration Tests
 
@@ -524,8 +524,10 @@ When acceptance tests run (`TESTFLOW_SIMULATE=1`), the real execution engine is 
 - **Scenario 3B**: Test design issue → "Test Design Issue" badge, "Apply Suggested Fix" button updates test steps, status resets to "Not Run"
 - **Scenario 3C**: Environment issue → "Environment Issue" badge, explanation about unreachable target, "Retry Test" button
 
-### Scenario 4: SWAP CHALLENGE - Self-Healing Tests (Not yet implemented)
-- **User Story**: As a development team, I want tests to adapt to UI changes automatically
+### Scenario 4: Report Email Smart Notifications (Implemented)
+- **User Story**: As a QA lead, I want critical failure alerts to reach the right recipient so urgent issues aren't missed
+- **Flow**: Save a Report Email in Settings → run a critical payment failure → results page shows the Smart Notification recipient, reason, and delivery status → recipient/reason persist on `test_runs` in SQLite
+- **Behavior**: Urgent and application-bug failures notify the configured Report Email (falling back to the logged-in user when unset); passing runs and noncritical failures are suppressed. Real SMTP delivery is optional via `TESTFLOW_SMTP_*` environment variables — Docker + Chromium alone are enough to run the acceptance test.
 
 ## Project Structure
 
@@ -560,7 +562,7 @@ testflow-ai/
 │   │   ├── test_creation_steps.py       # Selenium-based steps for Scenario 1
 │   │   ├── test_execution_steps.py      # Selenium steps for Scenario 2 (17 steps)
 │   │   ├── failure_diagnosis_steps.py   # Selenium steps for Scenario 3 (25 steps)
-│   │   └── ai_capabilities_steps.py     # Stubs for Scenario 4
+│   │   └── ai_capabilities_steps.py     # Selenium steps for Scenario 4 (Report Email notifications)
 │   └── environment.py                   # Flask + Selenium setup/teardown
 ├── Dockerfile
 ├── docker-compose.yml
