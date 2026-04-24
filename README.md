@@ -524,7 +524,7 @@ When acceptance tests run (`TESTFLOW_SIMULATE=1`), the real execution engine is 
 - **Scenario 3B**: Test design issue → "Test Design Issue" badge, "Apply Suggested Fix" button updates test steps, status resets to "Not Run"
 - **Scenario 3C**: Environment issue → "Environment Issue" badge, explanation about unreachable target, "Retry Test" button
 
-### Scenario 4: Report Email Smart Notifications (Implemented)
+### Scenario 4: Report Email Smart Notifications (Swap Challenge)
 - **User Story**: As a QA lead, I want critical failure alerts to reach the right recipient so urgent issues aren't missed
 - **Flow**: Save a Report Email in Settings → run a critical payment failure → results page shows the Smart Notification recipient, reason, and delivery status → recipient/reason persist on `test_runs` in SQLite
 - **Behavior**: Urgent and application-bug failures notify the configured Report Email (falling back to the logged-in user when unset); passing runs and noncritical failures are suppressed. Real SMTP delivery is optional via `TESTFLOW_SMTP_*` environment variables — Docker + Chromium alone are enough to run the acceptance test.
